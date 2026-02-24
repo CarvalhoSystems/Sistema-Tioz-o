@@ -710,6 +710,15 @@ function abrirWhatsApp(telefone) {
   // Clean phone number
   const phone = telefone.replace(/\D/g, "");
   window.open(`https://wa.me/55${phone}`, "_blank");
+
+  //enviar ofomulario de orçamento para o cliente via whatsapp
+  `Ola, segue o orçamento do seu aparelho, ${telefone}:
+  Marca: ${osSelecionada.marca}
+  Modelo: ${osSelecionada.modelo}
+  Defeito: ${osSelecionada.defeito}
+  Previsão de Entrega: ${formatarData(osSelecionada.previsao)}
+  Valor: R$ 199,99
+  Agradecemos pela preferência!`;
 }
 
 function verDetalhes(osId) {
