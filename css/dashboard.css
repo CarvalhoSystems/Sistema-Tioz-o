@@ -265,7 +265,9 @@ Dashboard Content
   font-size: 14px;
 }
 
-/* Charts Section */
+/*====================
+  Charts Section 
+====================*/
 .charts-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -289,7 +291,9 @@ Dashboard Content
   gap: 10px;
 }
 
-/* Status Distribution */
+/*=====================
+  Status Distribution 
+======================*/
 .status-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -335,7 +339,9 @@ Dashboard Content
   font-size: 18px;
 }
 
-/* Stock Alerts */
+/*==================
+  Stock Alerts
+=================== */
 .stock-alerts {
   display: flex;
   flex-direction: column;
@@ -426,7 +432,9 @@ OS Table
   border-color: var(--primary);
 }
 
-/* Table */
+/*===========
+  Table 
+=============*/
 .os-table {
   width: 100%;
   border-collapse: collapse;
@@ -485,6 +493,10 @@ OS Table
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/*===============
+  Status Badge
+================*/
 
 .status-badge {
   padding: 6px 12px;
@@ -554,6 +566,10 @@ OS Table
   font-size: 12px;
   cursor: pointer;
 }
+
+/*===========================
+  OS Finalizadas Scroll
+============================*/
 
 .os-finalizadas-table-body {
   max-height: 400px;
@@ -666,7 +682,10 @@ Modal
   padding: 24px;
 }
 
-/* Nova OS Form */
+/*================
+  Nova OS Form 
+==================
+*/
 .nova-os-form {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -734,7 +753,10 @@ Modal
   gap: 12px;
 }
 
-/* Search with results */
+/*===================
+  Search with results
+=====================*/
+
 .search-with-results {
   position: relative;
 }
@@ -768,7 +790,10 @@ Modal
   background: var(--bg-card-hover);
 }
 
-/* Checklist */
+/*============
+ Checklist
+==============*/
+
 .checklist-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -816,7 +841,10 @@ Modal
   color: var(--danger);
 }
 
-/* Photos Upload */
+/*============
+ Photos Upload 
+=============*/
+
 .photos-upload {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -866,7 +894,10 @@ Modal
   object-fit: cover;
 }
 
-/* Modal Footer */
+/*==============
+ Modal Footer 
+================*/
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -875,7 +906,10 @@ Modal
   border-top: 1px solid var(--border);
 }
 
-/* Nova OS Button in form */
+/*==================
+ Nova OS Button in form 
+====================*/
+
 .btn-new-client {
   display: flex;
   align-items: center;
@@ -901,6 +935,23 @@ Modal Cliente
 ==========================*/
 .modal-cliente .modal {
   max-width: 500px;
+}
+
+.modal-cliente .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-cliente .cliente-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-cliente .cliente-name {
+  font-size: 18px;
+  font-weight: 600;
 }
 
 /*==========================
@@ -968,7 +1019,10 @@ Modal Detalhes OS
   transform: scale(1.1);
 }
 
-/* Log de alterações */
+/*================
+ Log de alterações 
+==================*/
+
 .log-container {
   max-height: 200px;
   overflow-y: auto;
@@ -991,7 +1045,11 @@ Modal Detalhes OS
   color: var(--text);
 }
 
-/* Peças */
+/*
+================
+  Peças
+================
+*/
 .pecas-list {
   display: flex;
   flex-direction: column;
@@ -1044,6 +1102,34 @@ Modal Detalhes OS
 .add-peca-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
+}
+
+/*==========================
+previsao de Entrega Manual
+==========================*/
+.previsao-entrega {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 10px;
+}
+.previsao-icon {
+  font-size: 20px;
+}
+.previsao-text {
+  display: flex;
+  flex-direction: column;
+}
+.previsao-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.previsao-data {
+  font-weight: 600;
+  color: var(--primary-light);
 }
 
 /*==========================

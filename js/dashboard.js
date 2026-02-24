@@ -308,6 +308,14 @@ async function salvarNovoCliente() {
 }
 
 //======================
+// Clientes Cadastrtados
+//======================
+
+function clientesCadastrados() {
+  document.getElementById("clientes-cadastrados").value = nome;
+}
+
+//======================
 // OS Functions
 //======================
 async function carregarOrdens() {
@@ -463,6 +471,9 @@ async function salvarNovaOS() {
     fecharModalNovaOS();
   }
 }
+//======================
+// Numeros das OS
+//======================
 
 function generateOSNumber() {
   const date = new Date();
@@ -474,18 +485,26 @@ function generateOSNumber() {
   return `OS-${year}${month}-${random}`;
 }
 
-function atualizarPrevisaoEntrega() {
-  const dataPrevisao = new Date(Date.now() + 48 * 60 * 60 * 1000);
-  const options = {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  document.getElementById("previsao-entrega").textContent =
-    dataPrevisao.toLocaleDateString("pt-BR", options);
+//======================
+// Previsão de Entrega
+//======================
+// Seleciona os elementos
+const inputData = document.getElementById("data-manual");
+const displayPrevisao = document.getElementById("previsao-entrega");
+
+// Função que formata a data do input (AAAA-MM-DD) para (DD/MM/AAAA)
+function formatarDataManual(dataISO) {
+  if (!dataISO) return "--/--/----";
+
+  const partes = dataISO.split("-"); // Divide 2026-02-23 em [2026, 02, 23]
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
+
+// Evento que detecta a mudança no calendário
+inputData.addEventListener("change", function () {
+  const dataSelecionada = inputData.value;
+  displayPrevisao.textContent = formatarDataManual(dataSelecionada);
+});
 
 //======================
 // Dashboard Stats
@@ -702,25 +721,39 @@ async function alterarStatus(osId, novoStatus) {
   }
 }
 
-function abrirWhatsApp(telefone) {
+//======================
+// WhatsApp Integration
+//======================
+
+function abrirWhatsApp(telefone, valorOrcamento) {
   if (!telefone) {
     Swal.fire("Erro", "Telefone não disponível!", "warning");
     return;
   }
-  // Clean phone number
-  const phone = telefone.replace(/\D/g, "");
-  window.open(`https://wa.me/55${phone}`, "_blank");
 
-  //enviar ofomulario de orçamento para o cliente via whatsapp
-  `Ola, segue o orçamento do seu aparelho, ${telefone}:
-  Marca: ${osSelecionada.marca}
-  Modelo: ${osSelecionada.modelo}
-  Defeito: ${osSelecionada.defeito}
-  Previsão de Entrega: ${formatarData(osSelecionada.previsao)}
-  Valor: R$ 199,99
-  Agradecemos pela preferência!`;
+  // 1. Limpa o telefone e garante o 55
+  const phone = telefone.replace(/\D/g, "");
+  const ddiPhone = phone.startsWith("55") ? phone : `55${phone}`;
+
+  // 2. Formata o valor (importante para não ir 'undefined')
+  const valorFormatado = Number(valorOrcamento).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+  });
+
+  // 3. Monta a mensagem
+  const mensagem = `Olá, tudo bem? Já temos o diagnóstico e o orçamento do seu aparelho: o investimento será de R$ ${valorFormatado}. Você autoriza a realização do serviço? Caso tenha alguma dúvida, estou à disposição.`;
+
+  // 4. O PULO DO GATO: Use o protocolo 'whatsapp://' em vez de 'https://'
+  // Isso fala diretamente com o aplicativo instalado no seu Windows/Mac
+  const url = `whatsapp://send?phone=${ddiPhone}&text=${encodeURIComponent(mensagem)}`;
+
+  // 5. Tenta abrir o protocolo
+  window.location.assign(url);
 }
 
+//======================
+// Detalhes e Edição de OS
+//======================
 function verDetalhes(osId) {
   const os = ordensServico.find((o) => o.id === osId);
   if (os) {
@@ -753,7 +786,10 @@ function abrirModalEditarOS(os) {
   document.getElementById("edit-imei-aparelho").value = os.imei || "";
   document.getElementById("edit-senha-aparelho").value = os.senha || "";
   document.getElementById("edit-defeito-reclamado").value = os.defeito || "";
-
+  document.getElementById("edit-previsao").textContent = formatarData(
+    os.previsao,
+  );
+  document.getElementById("Valor-orcamento").value = os.orcamento || "";
   // Abrir modal
   const modal = document.getElementById("modal-editar-os");
   if (modal) modal.classList.add("active");
@@ -775,6 +811,7 @@ async function salvarEdicaoOS() {
   const marca = document.getElementById("edit-marca-aparelho").value;
   const modelo = document.getElementById("edit-modelo-aparelho").value;
   const defeito = document.getElementById("edit-defeito-reclamado").value;
+  const orcamento = document.getElementById("Valor-orcamento").value;
 
   if (!nomeCliente || !marca || !modelo || !defeito) {
     Swal.fire("Erro", "Preencha todos os campos obrigatórios!", "warning");
@@ -795,6 +832,7 @@ async function salvarEdicaoOS() {
     imei: document.getElementById("edit-imei-aparelho").value,
     senha: document.getElementById("edit-senha-aparelho").value,
     defeito: defeito,
+    orcamento: orcamento,
     updatedAt: new Date(),
   };
 
@@ -859,6 +897,14 @@ function renderizarDetalhesOS(os) {
   document.getElementById("detalhes-imei").textContent = os.imei || "-";
   document.getElementById("detalhes-senha").textContent = os.senha || "-";
   document.getElementById("detalhes-defeito").textContent = os.defeito || "-";
+  document.getElementById("detalhes-previsao").textContent = formatarData(
+    os.previsao,
+  );
+  document.getElementById("detalhes-valor").textContent = os.orcamento
+    ? `R$ ${Number(os.orcamento).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      })}`
+    : "-";
 
   // Checklist
   const checklist = os.checklist || {};
@@ -1030,7 +1076,18 @@ function imprimirOS(osId) {
             )
             .join("")}
         </div>
-
+        <div class="section">
+          <h2>Previsão de Entrega</h2>
+          <div class="field">
+            <span>${formatarData(os.previsao)}</span>
+          </div>
+        </div>
+        <div class="section">
+          <h2>Orçamento</h2>
+          <div class="field">
+            <span>${os.orcamento ? `R$ ${Number(os.orcamento).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "-"}</span>
+          </div>
+        </div>
       </body>
     </html>
   `;
@@ -1222,45 +1279,6 @@ function renderizarOSFinalizadas() {
             </button>
           </div>
         </td>
-      </tr>
-    `;
-    })
-    .join("");
-}
-
-//======================
-// Clientes
-//======================
-function renderizarClientes() {
-  const tbody = document.getElementById("clientes-table-body");
-  const clientes = clientesCadastrados;
-  if (clientes.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6"style="text-align: center; padding: 40px; color: var(--text-muted);">
-          <i class="fas fa-users" style="font-size: 40px; margin-bottom: 10px;"></i><br>
-          Nenhum cliente cadastrado encontrado
-          </td>
-      </tr>
-    `;
-    return;
-  }
-
-  tbody.innerHTML = clientes
-    .map((cliente) => {
-      return `
-      <tr>
-        <td><span class="client-id">${cliente.id}</span></td>
-        <td>
-          <div class="client-cell">
-            <span class="client-name">${cliente.nome}</span>
-            <span class="client-cpf">${cliente.cpf || ""}</span>
-          </div>
-        </td> 
-        <td>${cliente.telefone || "-"}</td>
-        <td>${cliente.whatsapp || "-"}</td>
-        <td>${cliente.email || "-"}</td>
-        <td>${cliente.endereco || "-"}</td>
       </tr>
     `;
     })

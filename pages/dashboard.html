@@ -44,9 +44,9 @@
           <span>Ordens de Serviço</span>
         </a> -->
 
-        <a href="#" class="nav-item" data-page="clientes">
+        <a href="#" class="nav-item" data-page="clientes" onclick="abrirModalClientesCadastrados()">
           <i class="fas fa-users"></i>
-          <span>Clientes</span>
+          <span>Clientes Cadastrados </span>
         </a>
         <a href="#" class="nav-item" data-page="estoque">
           <i class="fas fa-boxes-stacked"></i>
@@ -522,10 +522,9 @@
                 <div class="previsao-entrega">
                   <div class="previsao-icon">📅</div>
                   <div class="previsao-text">
-                    <span class="previsao-label">Previsão de Entrega</span>
-                    <span class="previsao-data" id="previsao-entrega"
-                      >+48h -的可能性</span
-                    >
+                    <label for="data-manual">Selecionar Data de Entrega:</label>
+                      <input type="date" id="data-manual">
+                      <p>Previsão de Entrega: <span id="previsao-entrega">--/--/----</span></p>
                   </div>
                 </div>
               </div>
@@ -914,6 +913,24 @@
                     placeholder="Descreva o problema relatado pelo cliente..."
                     required
                   ></textarea>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Previsão</label>
+                    <div class="form-input" id="edit-previsao">-</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Valor do Orçamento (R$)</label>
+                    <input
+                      type="number"
+                      class="form-input"
+                      id="Valor-orcamento"
+                      placeholder="0,00"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
                 </div>
               </div>
             </form>
