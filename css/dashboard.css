@@ -557,6 +557,11 @@ OS Table
   color: white;
 }
 
+.action-btn.delete:hover {
+  background: var(--danger);
+  color: white;
+}
+
 .dropdown-status {
   padding: 6px 10px;
   border-radius: 8px;

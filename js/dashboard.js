@@ -165,7 +165,7 @@ function resetarFormularioNovaOS() {
   document.getElementById("whatsapp-cliente").value = "";
   document.getElementById("email-cliente").value = "";
 
-  // Reset checklist
+  document.getElementById("previsao-entrega").value = ""; // Reset checklist
   checklistData = {
     liga: null,
     wifi: null,
@@ -471,8 +471,9 @@ async function salvarNovaOS() {
     fecharModalNovaOS();
   }
 }
+
 //======================
-// Numeros das OS
+// OS Number Generation
 //======================
 
 function generateOSNumber() {
@@ -614,6 +615,9 @@ function renderizarOrdens() {
             <button class="action-btn" title="Editar" onclick="editarOS('${os.id}')">
               <i class="fas fa-edit"></i>
             </button>
+            <button class="action-btn delete" title="Excluir" onclick="excluirOS('${os.id}')">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </td>
       </tr>
@@ -721,6 +725,43 @@ async function alterarStatus(osId, novoStatus) {
   }
 }
 
+async function excluirOS(osId) {
+  const result = await Swal.fire({
+    title: "Tem certeza?",
+    text: `Deseja excluir a OS ${osId}? Esta ação não pode ser desfeita!`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sim, excluir!",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#ef4444",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const snapshot = await db
+      .collection("ordens_servico")
+      .where("id", "==", osId)
+      .get();
+
+    await Promise.all(snapshot.docs.map((doc) => doc.ref.delete()));
+  } catch (error) {
+    console.error("Erro ao excluir no Firestore:", error);
+  }
+
+  ordensServico = ordensServico.filter((os) => os.id !== osId);
+
+  if (osSelecionada?.id === osId) {
+    fecharModalDetalhesOS();
+  }
+
+  atualizarDashboard();
+  renderizarOrdens();
+  renderizarOSFinalizadas();
+
+  Swal.fire("Excluído!", "Ordem de Serviço excluída com sucesso.", "success");
+}
+
 //======================
 // WhatsApp Integration
 //======================
@@ -735,14 +776,31 @@ function abrirWhatsApp(telefone, valorOrcamento) {
   const phone = telefone.replace(/\D/g, "");
   const ddiPhone = phone.startsWith("55") ? phone : `55${phone}`;
 
-  // 2. Formata o valor (importante para não ir 'undefined')
-  const valorFormatado = Number(valorOrcamento).toLocaleString("pt-BR", {
+  // 1. Limpa o valor (remove R$, espaços e troca vírgula por ponto para o JS entender)
+  const valorLimpo = String(valorOrcamento)
+    .replace("R$", "")
+    .replace(/\s/g, "")
+    .replace(",", ".");
+
+  // 2. Converte para número e garante que, se der erro, vire 0
+  const numeroFinal = parseFloat(valorLimpo) || 0;
+
+  // 3. Formata para o padrão brasileiro
+  const valorFormatado = numeroFinal.toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
   });
 
   // 3. Monta a mensagem
-  const mensagem = `Olá, tudo bem? Já temos o diagnóstico e o orçamento do seu aparelho: o investimento será de R$ ${valorFormatado}. Você autoriza a realização do serviço? Caso tenha alguma dúvida, estou à disposição.`;
+  const mensagem = `*Olá, tudo bem?* 👋
 
+Já temos o diagnóstico e o orçamento para o seu aparelho:
+
+💰 *Investimento:* R$ ${valorFormatado || "0,00"}
+
+📅 *Previsão de Entrega:* ${document.getElementById("previsao-entrega").textContent}
+
+Você autoriza a realização do serviço? 🛠️
+Qualquer dúvida, estou à disposição!`;
   // 4. O PULO DO GATO: Use o protocolo 'whatsapp://' em vez de 'https://'
   // Isso fala diretamente com o aplicativo instalado no seu Windows/Mac
   const url = `whatsapp://send?phone=${ddiPhone}&text=${encodeURIComponent(mensagem)}`;
@@ -1276,6 +1334,9 @@ function renderizarOSFinalizadas() {
             </button>
             <button class="action-btn" title="Editar" onclick="editarOS('${os.id}')">
               <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn delete" title="Excluir" onclick="excluirOS('${os.id}')">
+              <i class="fas fa-trash"></i>
             </button>
           </div>
         </td>
