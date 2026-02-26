@@ -156,6 +156,53 @@ function fecharModalDetalhesOS() {
   osSelecionada = null;
 }
 
+function abrirModalClientesCadastrados() {
+  const modal = document.getElementById("modal-clientes-cadastrados");
+  if (modal) modal.classList.add("active");
+}
+
+function fecharModalClientesCadastrados() {
+  const modal = document.getElementById("modal-clientes-cadastrados");
+  if (modal) modal.classList.remove("active");
+}
+
+function abrirModalEstoque() {
+  const modal = document.getElementById("modal-estoque");
+  if (modal) modal.classList.add("active");
+}
+
+function fecharModalEstoque() {
+  const modal = document.getElementById("modal-estoque");
+  if (modal) modal.classList.remove("active");
+}
+
+function abrirModalFinanceiro() {
+  const modal = document.getElementById("modal-financeiro");
+  if (modal) modal.classList.add("active");
+}
+
+function fecharModalFinanceiro() {
+  const modal = document.getElementById("modal-financeiro");
+  if (modal) modal.classList.remove("active");
+}
+
+//======================
+// Previsão de Entrega (helpers)
+//======================
+function atualizarPrevisaoEntrega() {
+  const inputData = document.getElementById("data-manual");
+  const displayPrevisao = document.getElementById("previsao-entrega");
+
+  if (!inputData || !displayPrevisao) return;
+
+  const dataSelecionada = inputData.value;
+  displayPrevisao.textContent = formatarDataManual(dataSelecionada);
+}
+
+//======================
+// Novas OS
+//======================
+
 function resetarFormularioNovaOS() {
   document.getElementById("form-nova-os").reset();
   document.getElementById("busca-cliente").value = "";
@@ -225,6 +272,10 @@ function buscarClientes() {
   }
 }
 
+//======================
+// Client Functions
+//======================
+
 function selecionarCliente(clienteId) {
   const cliente = clientes.find((c) => c.id === clienteId);
   if (cliente) {
@@ -237,9 +288,6 @@ function selecionarCliente(clienteId) {
   }
 }
 
-//======================
-// Client Functions
-//======================
 async function carregarClientes() {
   try {
     const snapshot = await db.collection("clientes").get();
@@ -310,9 +358,39 @@ async function salvarNovoCliente() {
 //======================
 // Clientes Cadastrtados
 //======================
+function abrirModalClientesCadastrados() {
+  const modal = document.getElementById("modal-clientes-cadastrados");
+  if (modal) modal.classList.add("active");
+  renderizarClientesCadastrados();
+}
 
-function clientesCadastrados() {
-  document.getElementById("clientes-cadastrados").value = nome;
+function renderizarClientesCadastrados() {
+  const tbody = document.getElementById("clientes-cadastrados-body");
+  if (!tbody) return;
+
+  if (clientes.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <i class="fas fa-users" style="font-size: 40px; margin-bottom: 10px;"></i><br>
+          Nenhum cliente cadastrado ainda.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  tbody.innerHTML = clientes
+    .map(
+      (c) => `
+      <tr>
+        <td>${c.nome}</td>
+        <td>${c.cpf || "-"}</td>
+        <td>${c.telefone || c.whatsapp || "-"}</td>
+        <td>${c.email || "-"}</td>
+      </tr>
+    `,
+    )
+    .join("");
 }
 
 //======================
@@ -502,10 +580,11 @@ function formatarDataManual(dataISO) {
 }
 
 // Evento que detecta a mudança no calendário
-inputData.addEventListener("change", function () {
-  const dataSelecionada = inputData.value;
-  displayPrevisao.textContent = formatarDataManual(dataSelecionada);
-});
+if (inputData) {
+  inputData.addEventListener("change", function () {
+    atualizarPrevisaoEntrega();
+  });
+}
 
 //======================
 // Dashboard Stats
@@ -521,14 +600,34 @@ function atualizarDashboard() {
   ).length;
   const peca = ordensServico.filter((os) => os.status === "peca").length;
 
-  // Calculate today's revenue (demo)
-  const faturamentoDia = Math.floor(Math.random() * 5000) + 1000;
+  //=====================
+  // Faturamento do Mês
+  //=====================
+
+  const agora = new Date();
+  const mesAtual = agora.getMonth();
+  const anoAtual = agora.getFullYear();
+
+  const faturamentoMes = ordensServico.reduce((total, os) => {
+    const createdAt = os.createdAt?.toDate
+      ? os.createdAt.toDate()
+      : new Date(os.createdAt);
+
+    const mesmoMes =
+      createdAt.getMonth() === mesAtual && createdAt.getFullYear() === anoAtual;
+    const statusValido = os.status === "pronto" || os.status === "entregue";
+
+    if (mesmoMes && statusValido) {
+      return total + Number(os.orcamento || os.valor || 0);
+    }
+    return total;
+  }, 0);
 
   document.getElementById("total-os").textContent = totalOS;
   document.getElementById("prontos-entrega").textContent = prontos;
   document.getElementById("em-orcamento").textContent = orcamento;
   document.getElementById("faturamento-dia").textContent =
-    `R$ ${faturamentoDia.toLocaleString("pt-BR")}`;
+    `R$ ${faturamentoMes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
   // Status distribution
   document.getElementById("count-orcamento").textContent = orcamento;
@@ -958,6 +1057,7 @@ function renderizarDetalhesOS(os) {
   document.getElementById("detalhes-previsao").textContent = formatarData(
     os.previsao,
   );
+  document.getElementById("detalhes-liga").textContent = os.checklist || "-";
   document.getElementById("detalhes-valor").textContent = os.orcamento
     ? `R$ ${Number(os.orcamento).toLocaleString("pt-BR", {
         minimumFractionDigits: 2,
@@ -1344,4 +1444,57 @@ function renderizarOSFinalizadas() {
     `;
     })
     .join("");
+}
+
+//======================
+// Estoque
+//======================
+function abrirModalEstoque() {
+  const modal = document.getElementById("modal-estoque");
+  swal.fire({
+    title: "Em breve!",
+    text: "O módulo de estoque está em desenvolvimento e será lançado em breve. Fique ligado para novidades!",
+    icon: "info",
+    confirmButtonText: "OK",
+  });
+}
+
+//======================
+// Financeiro
+//======================
+
+function abrirModalFinanceiro() {
+  const modal = document.getElementById("modal-financeiro");
+  if (modal) modal.classList.add("active");
+  renderizarFinanceiro();
+}
+function fecharModalFinanceiro() {
+  const modal = document.getElementById("modal-financeiro");
+  if (modal) modal.classList.remove("active");
+}
+function renderizarFinanceiro() {
+  const tbody = document.getElementById("financeiro-table-body");
+  const osFinanceiro = ordensServico.filter(
+    (os) => os.status === "entregue" && os.orcamento,
+  );
+  if (osFinanceiro.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <i class="fas fa-inbox" style="font-size: 40px; margin-bottom: 10px;"></i><br>
+          Nenhuma ordem de serviço com orçamento encontrado
+        </td>
+      </tr>
+    `;
+    return;
+  } else {
+    const totalFaturamento = osFinanceiro.reduce(
+      (total, os) => total + Number(os.orcamento || 0),
+      0,
+    );
+    document.getElementById("total-faturamento").textContent =
+      `R$ ${totalFaturamento.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      })}`;
+  }
 }

@@ -38,21 +38,15 @@
           <i class="fas fa-clipboard-list"></i>
           <span>Ordens de Serviço Finalizadas </span>
         </a>
-
-        <!-- <a href="#" class="nav-item" data-page="ordens">
-          <i class="fas fa-clipboard-list"></i>
-          <span>Ordens de Serviço</span>
-        </a> -->
-
         <a href="#" class="nav-item" data-page="clientes" onclick="abrirModalClientesCadastrados()">
           <i class="fas fa-users"></i>
           <span>Clientes Cadastrados </span>
         </a>
-        <a href="#" class="nav-item" data-page="estoque">
+        <a href="#" class="nav-item" data-page="estoque" onclick="abrirModalEstoque()">
           <i class="fas fa-boxes-stacked"></i>
           <span>Estoque</span>
         </a>
-        <a href="#" class="nav-item" data-page="financeiro">
+        <a href="#" class="nav-item" data-page="financeiro" onclick="abrirModalFinanceiro()">
           <i class="fas fa-chart-pie"></i>
           <span>Financeiro</span>
         </a>
@@ -123,8 +117,8 @@
               <div class="stat-icon red">
                 <i class="fas fa-exclamation-triangle"></i>
               </div>
-              <div class="stat-value" id="faturamento-dia">R$ 0</div>
-              <div class="stat-label">Faturamento do Dia</div>
+              <div class="stat-value" id="faturamento-dia">R$ </div>
+              <div class="stat-label">Faturamento do Mês </div>
             </div>
           </div>
 
@@ -180,7 +174,7 @@
                     <i class="fas fa-microchip"></i>
                     <span>Bateria iPhone 13</span>
                   </div>
-                  <span class="stock-qty" id="quantidade"></span>
+                  <span class="stock-qty" id="quantidade">2 uni</span>
                 </div>
                 <div class="stock-alert">
                   <div class="stock-alert-info">
@@ -763,7 +757,7 @@
                   <h4 class="detalhes-title">Histórico de Alterações</h4>
                   <div class="log-container" id="detalhes-log">
                     <div class="log-item">
-                      <span class="log-time">10:30</span>
+                      <span class="log-time" id="detalhes-log-time">-</span>
                       <span class="log-text">OS criada por Admin</span>
                     </div>
                   </div>
@@ -984,8 +978,94 @@
         </div>
       </div>
 
+      <!-- Modal Clientes Cadastrados -->
+      <div class="modal-overlay" id="modal-clientes-cadastrados">
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">
+              <i class="fas fa-users"></i>
+              Clientes Cadastrados
+            </h2>
+            <button class="modal-close" onclick="fecharModalClientesCadastrados()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <table class="os-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF</th>
+                  <th>Telefone</th>
+                  <th>E-mail</th>
+                </tr>
+              </thead>
+              <tbody id="clientes-cadastrados-body">
+                <!-- Clientes serão inseridos aqui -->
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="fecharModalClientesCadastrados()">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Toast Container -->
       <div class="toast-container" id="toast-container"></div>
+
+      <!-- Modal Estoque de Peças -->
+       <!--
+      <div class="Modal-overlay" id="modal-estoque">
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">
+              <i class="fas fa-boxes"></i>
+              Estoque de Peças
+            </h2>
+            <button class="modal-close" onclick="fecharModalEstoque()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Em breve, você poderá gerenciar o estoque de peças diretamente aqui!</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="fecharModalEstoque()">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!--Modal Financeiro-->
+
+      <!--
+      <div class="Modal-overlay" id="modal-financeiro">
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">
+              <i class="fas fa-chart-line"></i>
+              Financeiro
+            </h2>
+            <button class="modal-close" onclick="fecharModalFinanceiro()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p> Total Faturamento: <span id="total-faturamento">R$ 0,00</span></p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="fecharModalFinanceiro()">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+      -->
+
 
       <!-- Firebase -->
       <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
