@@ -687,6 +687,17 @@ Modal
   padding: 24px;
 }
 
+/* Ajuste específico para o Financeiro não ficar gigante nem cortado */
+#modal-financeiro .modal {
+  max-width: 500px; /* Financeiro fica melhor mais estreito */
+  border: 1px solid var(--border);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Garante que o overlay cubra a sidebar e o topo */
+.modal-overlay {
+  z-index: 9999 !important;
+}
 /*================
   Nova OS Form 
 ==================

@@ -1249,12 +1249,24 @@ function imprimirOS(osId) {
       </body>
     </html>
   `;
-  const printWindow = window.open("", "_blank");
+  const printWindow = window.open("", "_blank"); // Removido "os.value" para evitar erros de URL
   printWindow.document.write(printContent);
-  printWindow.print();
-  printWindow.close();
+  printWindow.document.close(); // Essencial para o navegador entender que o conteúdo acabou
+
+  // Aguarda as imagens carregarem antes de abrir a caixa de impressão
+  printWindow.onload = function () {
+    printWindow.focus(); // Foca na janela nova
+    printWindow.print(); // Abre a opção de encontrar/escolher a impressora
+
+    // Fecha a janela após a impressão (ou cancelamento)
+    // O setTimeout ajuda a evitar que a janela feche antes do comando de print disparar em alguns browsers
+    setTimeout(() => {
+      printWindow.close();
+    }, 500);
+  };
 }
 
+function adcionarImpressora() {}
 //======================
 // Photo Capture
 //======================
@@ -1463,38 +1475,201 @@ function abrirModalEstoque() {
 // Financeiro
 //======================
 
+/**
+ * Abre o modal financeiro e dispara a atualização dos dados
+ */
 function abrirModalFinanceiro() {
   const modal = document.getElementById("modal-financeiro");
-  if (modal) modal.classList.add("active");
-  renderizarFinanceiro();
+  if (!modal) return;
+
+  // 1. Garante que os cálculos estejam atualizados
+  atualizarDadosFinanceiros();
+
+  // 2. Abre o modal usando a sua classe CSS de animação
+  modal.style.display = "flex";
+  setTimeout(() => {
+    modal.classList.add("active");
+  }, 10);
+
+  // 3. Bloqueia o scroll do fundo para não bugar o layout
+  document.body.style.overflow = "hidden";
 }
+
+/**
+ * Fecha o modal financeiro
+ */
 function fecharModalFinanceiro() {
   const modal = document.getElementById("modal-financeiro");
-  if (modal) modal.classList.remove("active");
+  if (!modal) return;
+
+  modal.classList.remove("active");
+  setTimeout(() => {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }, 300); // Tempo compatível com a sua transition de 0.3s
 }
-function renderizarFinanceiro() {
-  const tbody = document.getElementById("financeiro-table-body");
-  const osFinanceiro = ordensServico.filter(
-    (os) => os.status === "entregue" && os.orcamento,
-  );
-  if (osFinanceiro.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
-          <i class="fas fa-inbox" style="font-size: 40px; margin-bottom: 10px;"></i><br>
-          Nenhuma ordem de serviço com orçamento encontrado
-        </td>
-      </tr>
-    `;
-    return;
-  } else {
-    const totalFaturamento = osFinanceiro.reduce(
-      (total, os) => total + Number(os.orcamento || 0),
-      0,
-    );
-    document.getElementById("total-faturamento").textContent =
-      `R$ ${totalFaturamento.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-      })}`;
+
+/**
+ * Processa as OS e atualiza os valores na tela
+ */
+function atualizarDadosFinanceiros() {
+  const agora = new Date();
+  const mesAtual = agora.getMonth();
+  const anoAtual = agora.getFullYear();
+
+  // 1. Filtrar apenas as OS do mês atual (baseado na data de previsão ou entrada)
+  // Se o seu objeto OS tiver 'dataEntrada', use-o para o financeiro
+  const osDoMes = ordensServico.filter((os) => {
+    const dataOS = new Date(os.previsao);
+    return dataOS.getMonth() === mesAtual && dataOS.getFullYear() === anoAtual;
+  });
+
+  // 2. Separar faturamento por status (Ex: Concluído = Dinheiro em caixa)
+  const faturamentoTotal = osDoMes
+    .filter((os) => os.status === "pronto" || os.status === "Entregue") // Ajuste conforme seus nomes de status
+    .reduce((acc, os) => acc + Number(os.orcamento || 0), 0);
+
+  const qtdConcluida = osDoMes.filter(
+    (os) => os.status === "pronto" || os.status === "Entregue",
+  ).length;
+
+  // 3. Calcular Ticket Médio (Total / Qtd de serviços pagos)
+  const ticketMedio = qtdConcluida > 0 ? faturamentoTotal / qtdConcluida : 0;
+
+  // 4. Atualizar os elementos do HTML que criamos
+  const elFaturamento = document.getElementById("fin-faturamento");
+  const elQtd = document.getElementById("fin-qtd-concluida");
+  const elTicket = document.getElementById("fin-ticket-medio");
+
+  if (elFaturamento) {
+    elFaturamento.innerText = faturamentoTotal.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  }
+
+  if (elQtd) elQtd.innerText = qtdConcluida;
+
+  if (elTicket) {
+    elTicket.innerText = ticketMedio.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
   }
 }
+
+//==================
+// Relatorios
+//==================
+
+function gerarRelatorioMensal() {
+  const agora = new Date();
+  const mesAtual = agora.getMonth();
+  const anoAtual = agora.getFullYear();
+
+  // 1. Filtrar OS do mês atual
+  const osDoMes = ordensServico.filter((os) => {
+    const dataOS = new Date(os.previsao); // Ou use a data de entrada se tiver
+    return dataOS.getMonth() === mesAtual && dataOS.getFullYear() === anoAtual;
+  });
+
+  // 2. Cálculos de Indicadores
+  const totalFaturamento = osDoMes.reduce(
+    (acc, os) => acc + Number(os.orcamento || 0),
+    0,
+  );
+  const totalOS = osDoMes.length;
+  const ticketMedio = totalOS > 0 ? totalFaturamento / totalOS : 0;
+
+  // 3. Contagem por Marca (Para saber o que mais entra)
+  const marcas = {};
+  osDoMes.forEach((os) => {
+    const m = getMarcaText(os.marca);
+    marcas[m] = (marcas[m] || 0) + 1;
+  });
+
+  // 4. Montar o HTML do Relatório
+  const relatorioHTML = `
+    <html>
+      <head>
+        <title>Relatório Mensal - ${mesAtual + 1}/${anoAtual}</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; padding: 30px; }
+          h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+          .cards { display: flex; gap: 20px; margin-bottom: 30px; }
+          .card { flex: 1; padding: 20px; border: 1px solid #ddd; border-radius: 8px; text-align: center; background: #f9f9f9; }
+          .card h3 { margin: 0; font-size: 14px; color: #7f8c8d; text-transform: uppercase; }
+          .card p { margin: 10px 0 0; font-size: 24px; font-weight: bold; color: #2c3e50; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+          th { background-color: #3498db; color: white; }
+          tr:nth-child(even) { background-color: #f2f2f2; }
+          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #95a5a6; }
+          @media print { .no-print { display: none; } }
+        </style>
+      </head>
+      <body>
+        <h1>Relatório Mensal: Assistência Técnica</h1>
+        <p>Período: ${mesAtual + 1}/${anoAtual} | Gerado em: ${agora.toLocaleDateString()}</p>
+
+        <div class="cards">
+          <div class="card">
+            <h3>Total de OS</h3>
+            <p>${totalOS}</p>
+          </div>
+          <div class="card">
+            <h3>Faturamento Bruto</h3>
+            <p>R$ ${totalFaturamento.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          </div>
+          <div class="card">
+            <h3>Ticket Médio</h3>
+            <p>R$ ${ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          </div>
+        </div>
+
+        <h2>Desempenho por Marca</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Marca</th>
+              <th>Quantidade de Aparelhos</th>
+              <th>Representatividade (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.entries(marcas)
+              .map(
+                ([marca, qtd]) => `
+              <tr>
+                <td>${marca}</td>
+                <td>${qtd}</td>
+                <td>${((qtd / totalOS) * 100).toFixed(1)}%</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+
+        <div class="no-print" style="margin-top: 30px;">
+          <button onclick="window.print()" style="padding: 10px 20px; cursor: pointer;">Imprimir Relatório</button>
+        </div>
+
+        <div class="footer">
+          Relatório gerado automaticamente pelo Sistema de Gestão de OS
+        </div>
+      </body>
+    </html>
+  `;
+
+  const win = window.open("", "_blank");
+  win.document.write(relatorioHTML);
+  win.document.close();
+}
+
+document
+  .getElementById("btn-relatorio-mensal")
+  .addEventListener("click", function (e) {
+    e.preventDefault();
+    gerarRelatorioMensal();
+  });

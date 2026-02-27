@@ -1,0 +1,65 @@
+
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema Assitencia - Cadastro</title>
+    <link rel="icon" type="image/png" href="../favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="../favicon/favicon.svg" />
+    <link rel="shortcut icon" href="../favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="../favicon/site.webmanifest" />
+    <link rel="stylesheet" href="../css/index.css" />
+  </head>
+  <body>
+    <!-- From Uiverse.io by Cksunandh -->
+    <div class="login-container">
+      <form class="login-form">
+        <p class="heading">Bem-vindo</p>
+        <p class="paragraph">Cadastre-se</p>
+        <div class="input-group">
+          <input
+            required=""
+            placeholder="Email"
+            id="email"
+            value=""
+            type="text"
+          />
+        </div>
+        <div class="input-group">
+          <input
+            required=""
+            placeholder="Senha"
+            name="password"
+            id="password"
+            type="password"
+          />
+        </div>
+        <div class="input-group">
+          <input
+            required=""
+            placeholder="Repita sua Senha"
+            name="password"
+            id="password"
+            type="password"
+          />
+        </div>
+        <button
+          type="submit"
+          onclick="
+            cadastro();
+            return false;
+          "
+        >
+          Cadastrar
+        </button>
+      
+      </form>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src=""></script>
+  </body>
+</html>

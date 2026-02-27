@@ -50,7 +50,7 @@
           <i class="fas fa-chart-pie"></i>
           <span>Financeiro</span>
         </a>
-        <a href="#" class="nav-item" data-page="relatorios">
+        <a href="#" class="nav-item" data-page="relatorios" id="relatorios-mensal">
           <i class="fas fa-file-alt"></i>
           <span>Relatórios</span>
         </a>
@@ -1013,59 +1013,45 @@
         </div>
       </div>
 
+      <!--Financeiro-->
+
+      <div class="modal-overlay" id="modal-financeiro">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <i class="fas fa-cash-register" style="color: var(--primary);"></i> 
+        Financeiro
+      </h2>
+      <button class="modal-close" onclick="fecharModalFinanceiro()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div style="background: linear-gradient(135deg, var(--success), #059669); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px;">
+        <span style="font-size: 13px; color: rgba(255,255,255,0.8);">FATURAMENTO MENSAL</span>
+        <h2 id="fin-faturamento" style="font-size: 32px; color: white; margin-top: 5px;">R$ 0,00</h2>
+      </div>
+
+      <div class="form-row">
+         <div class="form-section" style="text-align: center;">
+            <span class="form-label">OS FECHADAS</span>
+            <h3 id="fin-qtd-concluida">0</h3>
+         </div>
+         <div class="form-section" style="text-align: center;">
+            <span class="form-label">TICKET MÉDIO</span>
+            <h3 id="fin-ticket-medio">R$ 0,00</h3>
+         </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="fecharModalFinanceiro()">Fechar</button>
+    </div>
+  </div>
+</div>
       <!-- Toast Container -->
       <div class="toast-container" id="toast-container"></div>
-
-      <!-- Modal Estoque de Peças -->
-       <!--
-      <div class="Modal-overlay" id="modal-estoque">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 class="modal-title">
-              <i class="fas fa-boxes"></i>
-              Estoque de Peças
-            </h2>
-            <button class="modal-close" onclick="fecharModalEstoque()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p>Em breve, você poderá gerenciar o estoque de peças diretamente aqui!</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="fecharModalEstoque()">
-              Fechar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!--Modal Financeiro-->
-
-      <!--
-      <div class="Modal-overlay" id="modal-financeiro">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 class="modal-title">
-              <i class="fas fa-chart-line"></i>
-              Financeiro
-            </h2>
-            <button class="modal-close" onclick="fecharModalFinanceiro()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p> Total Faturamento: <span id="total-faturamento">R$ 0,00</span></p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="fecharModalFinanceiro()">
-              Fechar
-            </button>
-          </div>
-        </div>
-      </div>
-      -->
-
 
       <!-- Firebase -->
       <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
