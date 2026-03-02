@@ -857,6 +857,19 @@ Modal
   color: var(--danger);
 }
 
+.checklist-clientes {
+  padding: 6px 20px;
+  width: 25%;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
 /*============
  Photos Upload 
 =============*/

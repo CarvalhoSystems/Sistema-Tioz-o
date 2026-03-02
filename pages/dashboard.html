@@ -1,1065 +1,863 @@
 <!doctype html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard - Sistema Tiozão</title>
-    <link rel="stylesheet" href="../css/dashboard.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Sistema Tiozão</title>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="icon" type="image/png" href="../favicon/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="../favicon/favicon.svg" />
   <link rel="shortcut icon" href="../favicon/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png" />
   <!-- Manifest desativado para evitar erro CORS ao abrir via file:// -->
-  </head>
-  <body>
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="logo">
-          <i class="fas fa-tools"></i>
-          <span>Sistema <br />Nascimento </span>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <i class="fas fa-tools"></i>
+        <span>Sistema <br />Nascimento </span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <i class="fas fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-page="ordens" onclick="abrirModalOrdensFinalizadas()">
+        <i class="fas fa-clipboard-list"></i>
+        <span>Ordens de Serviço Finalizadas </span>
+      </a>
+      <a href="#" class="nav-item" data-page="clientes" onclick="abrirModalClientesCadastrados()">
+        <i class="fas fa-users"></i>
+        <span>Clientes Cadastrados </span>
+      </a>
+      <a href="#" class="nav-item" data-page="estoque" onclick="abrirModalEstoque()">
+        <i class="fas fa-boxes-stacked"></i>
+        <span>Estoque</span>
+      </a>
+      <a href="#" class="nav-item" data-page="financeiro" onclick="abrirModalFinanceiro()">
+        <i class="fas fa-chart-pie"></i>
+        <span>Financeiro</span>
+      </a>
+      <a href="#" class="nav-item" data-page="relatorios" id="relatorios-mensal">
+        <i class="fas fa-file-alt"></i>
+        <span>Relatórios</span>
+      </a>
+      <a href="#" class="nav-item" data-page="configuracoes">
+        <i class="fas fa-cog"></i>
+        <span>Configurações</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">AD</div>
+        <div>
+          <div class="user-name">Admin</div>
+          <div class="user-role">Administrador</div>
         </div>
       </div>
-      <nav class="sidebar-nav">
-        <a href="#" class="nav-item active" data-page="dashboard">
-          <i class="fas fa-chart-line"></i>
-          <span>Dashboard</span>
-        </a>
-        <a
-          href="#"
-          class="nav-item"
-          data-page="ordens"
-          onclick="abrirModalOrdensFinalizadas()"
-        >
-          <i class="fas fa-clipboard-list"></i>
-          <span>Ordens de Serviço Finalizadas </span>
-        </a>
-        <a href="#" class="nav-item" data-page="clientes" onclick="abrirModalClientesCadastrados()">
-          <i class="fas fa-users"></i>
-          <span>Clientes Cadastrados </span>
-        </a>
-        <a href="#" class="nav-item" data-page="estoque" onclick="abrirModalEstoque()">
-          <i class="fas fa-boxes-stacked"></i>
-          <span>Estoque</span>
-        </a>
-        <a href="#" class="nav-item" data-page="financeiro" onclick="abrirModalFinanceiro()">
-          <i class="fas fa-chart-pie"></i>
-          <span>Financeiro</span>
-        </a>
-        <a href="#" class="nav-item" data-page="relatorios" id="relatorios-mensal">
-          <i class="fas fa-file-alt"></i>
-          <span>Relatórios</span>
-        </a>
-        <a href="#" class="nav-item" data-page="configuracoes">
-          <i class="fas fa-cog"></i>
-          <span>Configurações</span>
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="user-info">
-          <div class="user-avatar">AD</div>
-          <div>
-            <div class="user-name">Admin</div>
-            <div class="user-role">Administrador</div>
+    </div>
+  </aside>
+
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <h1 class="page-title">Painel de Controle</h1>
+      <div class="top-bar-actions">
+        <button class="btn btn-primary" onclick="abrirModalNovaOS()">
+          <i class="fas fa-plus"></i>
+          Nova OS
+        </button>
+        <button class="btn btn-secondary" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          Sair
+        </button>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-clipboard-list"></i>
           </div>
+          <div class="stat-value" id="total-os">0</div>
+          <div class="stat-label">OS Abertas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-value" id="prontos-entrega">0</div>
+          <div class="stat-label">Prontos para Entrega</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-value" id="em-orcamento">0</div>
+          <div class="stat-label">Aguardando Orçamento</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="stat-value" id="faturamento-dia">R$ </div>
+          <div class="stat-label">Faturamento do Dia </div>
         </div>
       </div>
-    </aside>
-    
 
-      <!-- Main Content -->
-      <main class="main-content">
-        <!-- Top Bar -->
-        <header class="top-bar">
-          <h1 class="page-title">Painel de Controle</h1>
-          <div class="top-bar-actions">
-            <button class="btn btn-primary" onclick="abrirModalNovaOS()">
-              <i class="fas fa-plus"></i>
-              Nova OS
-            </button>
-            <button class="btn btn-secondary" onclick="logout()">
-              <i class="fas fa-sign-out-alt"></i>
-              Sair
-            </button>
-          </div>
-        </header>
-
-        <!-- Dashboard Content -->
-        <div class="dashboard-content">
-          <!-- Stats Cards -->
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon blue">
-                <i class="fas fa-clipboard-list"></i>
+      <!-- Charts Section -->
+      <div class="charts-section">
+        <!-- Status Distribution -->
+        <div class="chart-card">
+          <h3 class="chart-title">
+            <i class="fas fa-chart-pie"></i>
+            Distribuição por Status
+          </h3>
+          <div class="status-grid">
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-dot red"></span>
+                <span>Aguardando Orçamento</span>
               </div>
-              <div class="stat-value" id="total-os">0</div>
-              <div class="stat-label">OS Abertas</div>
+              <span class="status-count" id="count-orcamento">0</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon green">
-                <i class="fas fa-check-circle"></i>
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-dot yellow"></span>
+                <span>Aguardando Peça</span>
               </div>
-              <div class="stat-value" id="prontos-entrega">0</div>
-              <div class="stat-label">Prontos para Entrega</div>
+              <span class="status-count" id="count-peca">0</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon yellow">
-                <i class="fas fa-clock"></i>
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-dot blue"></span>
+                <span>Em Manutenção</span>
               </div>
-              <div class="stat-value" id="em-orcamento">0</div>
-              <div class="stat-label">Aguardando Orçamento</div>
+              <span class="status-count" id="count-manutencao">0</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon red">
-                <i class="fas fa-exclamation-triangle"></i>
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-dot green"></span>
+                <span>Pronto para Retirada</span>
               </div>
-              <div class="stat-value" id="faturamento-dia">R$ </div>
-              <div class="stat-label">Faturamento do Mês </div>
+              <span class="status-count" id="count-pronto">0</span>
             </div>
-          </div>
-
-          <!-- Charts Section -->
-          <div class="charts-section">
-            <!-- Status Distribution -->
-            <div class="chart-card">
-              <h3 class="chart-title">
-                <i class="fas fa-chart-pie"></i>
-                Distribuição por Status
-              </h3>
-              <div class="status-grid">
-                <div class="status-item">
-                  <div class="status-label">
-                    <span class="status-dot red"></span>
-                    <span>Aguardando Orçamento</span>
-                  </div>
-                  <span class="status-count" id="count-orcamento">0</span>
-                </div>
-                <div class="status-item">
-                  <div class="status-label">
-                    <span class="status-dot yellow"></span>
-                    <span>Aguardando Peça</span>
-                  </div>
-                  <span class="status-count" id="count-peca">0</span>
-                </div>
-                <div class="status-item">
-                  <div class="status-label">
-                    <span class="status-dot blue"></span>
-                    <span>Em Manutenção</span>
-                  </div>
-                  <span class="status-count" id="count-manutencao">0</span>
-                </div>
-                <div class="status-item">
-                  <div class="status-label">
-                    <span class="status-dot green"></span>
-                    <span>Pronto para Retirada</span>
-                  </div>
-                  <span class="status-count" id="count-pronto">0</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Stock Alerts -->
-            <div class="chart-card">
-              <h3 class="chart-title">
-                <i class="fas fa-exclamation-circle"></i>
-                Alertas de Estoque
-              </h3>
-              <div class="stock-alerts" id="stock-alerts">
-                <div class="stock-alert">
-                  <div class="stock-alert-info">
-                    <i class="fas fa-microchip"></i>
-                    <span>Bateria iPhone 13</span>
-                  </div>
-                  <span class="stock-qty" id="quantidade">2 uni</span>
-                </div>
-                <div class="stock-alert">
-                  <div class="stock-alert-info">
-                    <i class="fas fa-display"></i>
-                    <span>Tela Samsung A52</span>
-                  </div>
-                  <span class="stock-qty">1 uni</span>
-                </div>
-                <div class="stock-alert">
-                  <div class="stock-alert-info">
-                    <i class="fas fa-charging-station"></i>
-                    <span>Conector Carga iPad</span>
-                  </div>
-                  <span class="stock-qty">3 uni</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- OS Table Section -->
-          <div class="os-section">
-            <div class="section-header">
-              <h3 class="chart-title">
-                <i class="fas fa-list"></i>
-                Ordens de Serviço Recentes
-              </h3>
-              <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input
-                  type="text"
-                  placeholder="Buscar por IMEI ou nome..."
-                  id="busca-os"
-                  onkeyup="filtrarOS()"
-                />
-              </div>
-            </div>
-
-            <!-- Filters -->
-            <div class="filters">
-              <button class="filter-btn active" data-filter="all">Todas</button>
-              <button class="filter-btn" data-filter="orcamento">
-                Orçamento
-              </button>
-              <button class="filter-btn" data-filter="peca">
-                Aguardando Peça
-              </button>
-              <button class="filter-btn" data-filter="manutencao">
-                Em Manutenção
-              </button>
-              <button class="filter-btn" data-filter="pronto">Prontos</button>
-            </div>
-
-            <!-- Table -->
-            <table class="os-table">
-              <thead>
-                <tr>
-                  <th>OS</th>
-                  <th>Cliente</th>
-                  <th>Aparelho</th>
-                  <th>Status</th>
-                  <th>Previsão</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="os-table-body">
-                <!-- OS rows will be inserted here -->
-              </tbody>
-            </table>
           </div>
         </div>
-      </main>
 
-      <!-- Modal Nova OS -->
-      <div class="modal-overlay" id="modal-nova-os">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 class="modal-title">
-              <i class="fas fa-plus-circle"></i>
-              Nova Ordem de Serviço
-            </h2>
-            <button class="modal-close" onclick="fecharModalNovaOS()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="modal-body">
-            <form class="nova-os-form" id="form-nova-os">
-              <!-- Seção 1: Identificação -->
-              <div class="form-section">
-                <h3 class="section-title">
-                  <i class="fas fa-user"></i>
-                  Identificação (Quem?)
-                </h3>
-                <div class="form-group search-with-results">
-                  <label class="form-label"
-                    >Buscar Cliente (CPF ou Telefone)</label
-                  >
-                  <input
-                    type="text"
-                    class="form-input"
-                    id="busca-cliente"
-                    placeholder="Digite CPF ou telefone..."
-                    autocomplete="off"
-                  />
-                  <div class="search-results" id="resultados-cliente"></div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Nome do Cliente</label>
-                  <input
-                    type="text"
-                    class="form-input"
-                    id="nome-cliente"
-                    required
-                  />
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">WhatsApp</label>
-                    <input
-                      type="tel"
-                      class="form-input"
-                      id="whatsapp-cliente"
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">E-mail</label>
-                    <input
-                      type="email"
-                      class="form-input"
-                      id="email-cliente"
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  class="btn-new-client"
-                  onclick="abrirModalCliente()"
-                >
-                  <i class="fas fa-plus"></i>
-                  Novo Cliente
-                </button>
+        <!-- Stock Alerts -->
+        <div class="chart-card">
+          <h3 class="chart-title">
+            <i class="fas fa-exclamation-circle"></i>
+            Alertas de Estoque
+          </h3>
+          <div class="stock-alerts" id="stock-alerts">
+            <div class="stock-alert">
+              <div class="stock-alert-info">
+                <i class="fas fa-microchip"></i>
+                <span>Bateria iPhone 13</span>
               </div>
-
-              <!-- Seção 2: O Aparelho -->
-              <div class="form-section">
-                <h3 class="section-title">
-                  <i class="fas fa-mobile-alt"></i>
-                  O Aparelho (O Quê?)
-                </h3>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Marca</label>
-                    <select class="form-select" id="marca-aparelho" required>
-                      <option value="">Selecione...</option>
-                      <option value="apple">Apple</option>
-                      <option value="samsung">Samsung</option>
-                      <option value="motorola">Motorola</option>
-                      <option value="xiaomi">Xiaomi</option>
-                      <option value="realme">Realme</option>
-                      <option value="infinix">Infinix</option>
-                      <option value="outros">Outros</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Modelo</label>
-                    <input
-                      type="text"
-                      class="form-input"
-                      id="modelo-aparelho"
-                      placeholder="Ex: iPhone 17 Pro"
-                      required
-                    />
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Cor</label>
-                    <input
-                      type="text"
-                      class="form-input"
-                      id="cor-aparelho"
-                      placeholder="Ex: Preto"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">IMEI</label>
-                    <input
-                      type="text"
-                      class="form-input"
-                      id="imei-aparelho"
-                      placeholder="000000000000000"
-                    />
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">
-                    <i class="fas fa-lock"></i> Senha de Desenho / Numérica
-                  </label>
-                  <input
-                    type="text"
-                    class="form-input"
-                    id="senha-aparelho"
-                    placeholder="Senha para testes"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Defeito Reclamado</label>
-                  <textarea
-                    class="form-textarea"
-                    id="defeito-reclamado"
-                    placeholder="Descreva o problema relatado pelo cliente..."
-                    required
-                  ></textarea>
-                </div>
+              <span class="stock-qty" id="quantidade">2 uni</span>
+            </div>
+            <div class="stock-alert">
+              <div class="stock-alert-info">
+                <i class="fas fa-display"></i>
+                <span>Tela Samsung A52</span>
               </div>
-
-              <!-- Seção 3: Checklist e Fotos -->
-              <div class="form-section">
-                <h3 class="section-title">
-                  <i class="fas fa-clipboard-check"></i>
-                  O Contrato (Checklist)
-                </h3>
-
-                <!-- Checklist Grid -->
-                <div class="checklist-grid">
-                  <div class="checklist-item">
-                    <span class="checklist-label">🔌 Liga</span>
-                    <div class="checklist-buttons">
-                      <button
-                        type="button"
-                        class="check-btn"
-                        data-check="liga"
-                        data-value="sim"
-                      >
-                        Sim
-                      </button>
-                      <button
-                        type="button"
-                        class="check-btn bad"
-                        data-check="liga"
-                        data-value="nao"
-                      >
-                        Não
-                      </button>
-                    </div>
-                  </div>
-                  <div class="checklist-item">
-                    <span class="checklist-label">📶 WiFi</span>
-                    <div class="checklist-buttons">
-                      <button
-                        type="button"
-                        class="check-btn"
-                        data-check="wifi"
-                        data-value="sim"
-                      >
-                        Sim
-                      </button>
-                      <button
-                        type="button"
-                        class="check-btn bad"
-                        data-check="wifi"
-                        data-value="nao"
-                      >
-                        Não
-                      </button>
-                    </div>
-                  </div>
-                  <div class="checklist-item">
-                    <span class="checklist-label">👆 Touch</span>
-                    <div class="checklist-buttons">
-                      <button
-                        type="button"
-                        class="check-btn"
-                        data-check="touch"
-                        data-value="sim"
-                      >
-                        Sim
-                      </button>
-                      <button
-                        type="button"
-                        class="check-btn bad"
-                        data-check="touch"
-                        data-value="nao"
-                      >
-                        Não
-                      </button>
-                    </div>
-                  </div>
-                  <div class="checklist-item">
-                    <span class="checklist-label">🔘 Botões</span>
-                    <div class="checklist-buttons">
-                      <button
-                        type="button"
-                        class="check-btn"
-                        data-check="botoes"
-                        data-value="ok"
-                      >
-                        Ok
-                      </button>
-                      <button
-                        type="button"
-                        class="check-btn bad"
-                        data-check="botoes"
-                        data-value="ruim"
-                      >
-                        Ruim
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Photos Upload -->
-                <div class="form-group" style="margin-top: 20px">
-                  <label class="form-label">
-                    <i class="fas fa-camera"></i> Fotos do Aparelho (4 ângulos)
-                  </label>
-                  <div class="photos-upload">
-                    <div class="photo-slot" onclick="capturarFoto(0)">
-                      <i class="fas fa-camera"></i>
-                      <span>Frente</span>
-                    </div>
-                    <div class="photo-slot" onclick="capturarFoto(1)">
-                      <i class="fas fa-camera"></i>
-                      <span>Trás</span>
-                    </div>
-                    <div class="photo-slot" onclick="capturarFoto(2)">
-                      <i class="fas fa-camera"></i>
-                      <span>Lado</span>
-                    </div>
-                    <div class="photo-slot" onclick="capturarFoto(3)">
-                      <i class="fas fa-camera"></i>
-                      <span>Defeito</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Previsão de Entrega -->
-                <div class="previsao-entrega">
-                  <div class="previsao-icon">📅</div>
-                  <div class="previsao-text">
-                    <label for="data-manual">Selecionar Data de Entrega:</label>
-                      <input type="date" id="data-manual">
-                      <p>Previsão de Entrega: <span id="previsao-entrega">  /  /    </span></p>
-                  </div>
-                </div>
+              <span class="stock-qty">1 uni</span>
+            </div>
+            <div class="stock-alert">
+              <div class="stock-alert-info">
+                <i class="fas fa-charging-station"></i>
+                <span>Conector Carga iPad</span>
               </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="fecharModalNovaOS()">
-              Cancelar
-            </button>
-            <button class="btn btn-primary" onclick="salvarNovaOS()">
-              <i class="fas fa-save"></i>
-              Criar OS
-            </button>
+              <span class="stock-qty">3 uni</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Modal Novo Cliente -->
-      <div class="modal-overlay" id="modal-cliente">
-        <div class="modal modal-cliente">
-          <div class="modal-header">
-            <h2 class="modal-title">
-              <i class="fas fa-user-plus"></i>
-              Novo Cliente
-            </h2>
-            <button class="modal-close" onclick="fecharModalCliente()">
-              <i class="fas fa-times"></i>
-            </button>
+      <!-- OS Table Section -->
+      <div class="os-section">
+        <div class="section-header">
+          <h3 class="chart-title">
+            <i class="fas fa-list"></i>
+            Ordens de Serviço Recentes
+          </h3>
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Buscar por IMEI ou nome..." id="busca-os" onkeyup="filtrarOS()" />
           </div>
-          <div class="modal-body">
-            <form id="form-novo-cliente">
-              <div class="form-group">
-                <label class="form-label">Nome Completo</label>
-                <input
-                  type="text"
-                  class="form-input"
-                  id="novo-cliente-nome"
-                  required
-                />
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">CPF</label>
-                  <input
-                    type="text"
-                    class="form-input"
-                    id="novo-cliente-cpf"
-                    placeholder="000.000.000-00"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Telefone</label>
-                  <input
-                    type="tel"
-                    class="form-input"
-                    id="novo-cliente-telefone"
-                    placeholder="(00) 00000-0000"
-                  />
-                </div>
-              </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+          <button class="filter-btn active" data-filter="all">Todas</button>
+          <button class="filter-btn" data-filter="orcamento">
+            Orçamento
+          </button>
+          <button class="filter-btn" data-filter="peca">
+            Aguardando Peça
+          </button>
+          <button class="filter-btn" data-filter="manutencao">
+            Em Manutenção
+          </button>
+          <button class="filter-btn" data-filter="pronto">Prontos</button>
+        </div>
+
+        <!-- Table -->
+        <table class="os-table">
+          <thead>
+            <tr>
+              <th>OS</th>
+              <th>Cliente</th>
+              <th>Aparelho</th>
+              <th>Status</th>
+              <th>Previsão</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="os-table-body">
+            <!-- OS rows will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Nova OS -->
+  <div class="modal-overlay" id="modal-nova-os">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-plus-circle"></i>
+          Nova Ordem de Serviço
+        </h2>
+        <button class="modal-close" onclick="fecharModalNovaOS()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form class="nova-os-form" id="form-nova-os">
+          <!-- Seção 1: Identificação -->
+          <div class="form-section">
+            <h3 class="section-title">
+              <i class="fas fa-user"></i>
+              Identificação (Quem?)
+            </h3>
+            <div class="form-group search-with-results">
+              <label class="form-label">Buscar Cliente (CPF ou Telefone)</label>
+              <input type="text" class="form-input" id="busca-cliente" placeholder="Digite CPF ou telefone..."
+                autocomplete="off" />
+              <div class="search-results" id="resultados-cliente"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nome do Cliente</label>
+              <input type="text" class="form-input" id="nome-cliente" required />
+            </div>
+            <div class="form-row">
               <div class="form-group">
                 <label class="form-label">WhatsApp</label>
-                <input
-                  type="tel"
-                  class="form-input"
-                  id="novo-cliente-whatsapp"
-                  placeholder="(00) 00000-0000"
-                />
+                <input type="tel" class="form-input" id="whatsapp-cliente" placeholder="(00) 00000-0000" />
               </div>
               <div class="form-group">
                 <label class="form-label">E-mail</label>
-                <input
-                  type="email"
-                  class="form-input"
-                  id="novo-cliente-email"
-                  placeholder="email@exemplo.com"
-                />
+                <input type="email" class="form-input" id="email-cliente" placeholder="email@exemplo.com" />
+              </div>
+            </div>
+            <button type="button" class="btn-new-client" onclick="abrirModalCliente()">
+              <i class="fas fa-plus"></i>
+              Novo Cliente
+            </button>
+          </div>
+
+          <!-- Seção 2: O Aparelho -->
+          <div class="form-section">
+            <h3 class="section-title">
+              <i class="fas fa-mobile-alt"></i>
+              O Aparelho (O Quê?)
+            </h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Marca</label>
+                <select class="form-select" id="marca-aparelho" required>
+                  <option value="">Selecione...</option>
+                  <option value="apple">Apple</option>
+                  <option value="samsung">Samsung</option>
+                  <option value="motorola">Motorola</option>
+                  <option value="xiaomi">Xiaomi</option>
+                  <option value="realme">Realme</option>
+                  <option value="infinix">Infinix</option>
+                  <option value="outros">Outros</option>
+                </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Endereço</label>
-                <input
-                  type="text"
-                  class="form-input"
-                  id="novo-cliente-endereco"
-                  placeholder="Rua, número, bairro"
-                />
+                <label class="form-label">Modelo</label>
+                <input type="text" class="form-input" id="modelo-aparelho" placeholder="Ex: iPhone 17 Pro" required />
               </div>
-            </form>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Cor</label>
+                <input type="text" class="form-input" id="cor-aparelho" placeholder="Ex: Preto" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">IMEI</label>
+                <input type="text" class="form-input" id="imei-aparelho" placeholder="000000000000000" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                <i class="fas fa-lock"></i> Senha de Desenho / Numérica
+              </label>
+              <input type="text" class="form-input" id="senha-aparelho" placeholder="Senha para testes" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Defeito Reclamado</label>
+              <textarea class="form-textarea" id="defeito-reclamado"
+                placeholder="Descreva o problema relatado pelo cliente..." required></textarea>
+            </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="fecharModalCliente()">
-              Cancelar
-            </button>
-            <button class="btn btn-primary" onclick="salvarNovoCliente()">
-              <i class="fas fa-save"></i>
-              Salvar Cliente
-            </button>
+
+          <!-- Seção 3: Checklist e Fotos -->
+          <div class="form-section">
+            <h3 class="section-title">
+              <i class="fas fa-clipboard-check"></i>
+              O Contrato (Checklist)
+            </h3>
+
+            <!-- Checklist Grid -->
+            <div class="checklist-grid">
+              <div class="checklist-item">
+                <span class="checklist-label">🔌 Liga</span>
+                <div class="checklist-buttons">
+                  <button type="button" class="check-btn" data-check="liga" data-value="sim">
+                    Sim
+                  </button>
+                  <button type="button" class="check-btn bad" data-check="liga" data-value="nao">
+                    Não
+                  </button>
+                </div>
+              </div>
+              <div class="checklist-item">
+                <span class="checklist-label">📶 WiFi</span>
+                <div class="checklist-buttons">
+                  <button type="button" class="check-btn" data-check="wifi" data-value="sim">
+                    Sim
+                  </button>
+                  <button type="button" class="check-btn bad" data-check="wifi" data-value="nao">
+                    Não
+                  </button>
+                </div>
+              </div>
+              <div class="checklist-item">
+                <span class="checklist-label">👆 Touch</span>
+                <div class="checklist-buttons">
+                  <button type="button" class="check-btn" data-check="touch" data-value="sim">
+                    Sim
+                  </button>
+                  <button type="button" class="check-btn bad" data-check="touch" data-value="nao">
+                    Não
+                  </button>
+                </div>
+              </div>
+              <div class="checklist-item">
+                <span class="checklist-label">🔘 Botões</span>
+                <div class="checklist-buttons">
+                  <button type="button" class="check-btn" data-check="botoes" data-value="ok">
+                    Ok
+                  </button>
+                  <button type="button" class="check-btn bad" data-check="botoes" data-value="ruim">
+                    Ruim
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Photos Upload -->
+            <div class="form-group" style="margin-top: 20px">
+              <label class="form-label">
+                <i class="fas fa-camera"></i> Fotos do Aparelho (4 ângulos)
+              </label>
+              <div class="photos-upload">
+                <div class="photo-slot" onclick="capturarFoto(0)">
+                  <i class="fas fa-camera"></i>
+                  <span>Frente</span>
+                </div>
+                <div class="photo-slot" onclick="capturarFoto(1)">
+                  <i class="fas fa-camera"></i>
+                  <span>Trás</span>
+                </div>
+                <div class="photo-slot" onclick="capturarFoto(2)">
+                  <i class="fas fa-camera"></i>
+                  <span>Lado</span>
+                </div>
+                <div class="photo-slot" onclick="capturarFoto(3)">
+                  <i class="fas fa-camera"></i>
+                  <span>Defeito</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Previsão de Entrega -->
+            <div class="previsao-entrega">
+              <div class="previsao-icon">📅</div>
+              <div class="previsao-text">
+                <label for="data-manual">Selecionar Data de Entrega:</label>
+                <input type="date" id="data-manual">
+                <p>Previsão de Entrega: <span id="previsao-entrega"> / / </span></p>
+              </div>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModalNovaOS()">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" onclick="salvarNovaOS()">
+          <i class="fas fa-save"></i>
+          Criar OS
+        </button>
+      </div>
+    </div>
+  </div>
 
-      <!-- Modal Detalhes OS -->
-      <div class="modal-overlay" id="modal-detalhes-os">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 class="modal-title">
-              <i class="fas fa-clipboard"></i>
-              Detalhes da OS
-            </h2>
-            <button class="modal-close" onclick="fecharModalDetalhesOS()">
-              <i class="fas fa-times"></i>
-            </button>
+  <!-- Modal Novo Cliente -->
+  <div class="modal-overlay" id="modal-cliente">
+    <div class="modal modal-cliente">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-user-plus"></i>
+          Novo Cliente
+        </h2>
+        <button class="modal-close" onclick="fecharModalCliente()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form-novo-cliente">
+          <div class="form-group">
+            <label class="form-label">Nome Completo</label>
+            <input type="text" class="form-input" id="novo-cliente-nome" required />
           </div>
-          <div class="modal-body">
-            <div class="detalhes-os-content">
-              <!-- Coluna 1 -->
-              <div>
-                <div class="detalhes-section">
-                  <h4 class="dethes-title">Informações do Cliente</h4>
-                  <div class="detalhes-grid">
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">Nome</span>
-                      <span class="detalhes-value" id="detalhes-cliente-nome"
-                        >-</span
-                      >
-                    </div>
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">Telefone</span>
-                      <span
-                        class="detalhes-value"
-                        id="detalhes-cliente-telefone"
-                        >-</span
-                      >
-                    </div>
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">WhatsApp</span>
-                      <span
-                        class="detalhes-value"
-                        id="detalhes-cliente-whatsapp"
-                        >-</span
-                      >
-                    </div>
-                  </div>
-                </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">CPF</label>
+              <input type="text" class="form-input" id="novo-cliente-cpf" placeholder="000.000.000-00" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telefone</label>
+              <input type="tel" class="form-input" id="novo-cliente-telefone" placeholder="(00) 00000-0000" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">WhatsApp</label>
+            <input type="tel" class="form-input" id="novo-cliente-whatsapp" placeholder="(00) 00000-0000" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-input" id="novo-cliente-email" placeholder="email@exemplo.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Endereço</label>
+            <input type="text" class="form-input" id="novo-cliente-endereco" placeholder="Rua, número, bairro" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModalCliente()">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" onclick="salvarNovoCliente()">
+          <i class="fas fa-save"></i>
+          Salvar Cliente
+        </button>
+      </div>
+    </div>
+  </div>
 
-                <div class="detalhes-section" style="margin-top: 16px">
-                  <h4 class="detalhes-title">Informações do Aparelho</h4>
-                  <div class="detalhes-grid">
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">Marca/Modelo</span>
-                      <span class="detalhes-value" id="detalhes-aparelho"
-                        >-</span
-                      >
-                    </div>
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">Cor</span>
-                      <span class="detalhes-value" id="detalhes-cor">-</span>
-                    </div>
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">IMEI</span>
-                      <span class="detalhes-value" id="detalhes-imei">-</span>
-                    </div>
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">Senha</span>
-                      <span class="detalhes-value" id="detalhes-senha">-</span>
-                    </div>
-                  </div>
+  <!-- Modal Detalhes OS -->
+  <div class="modal-overlay" id="modal-detalhes-os">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-clipboard"></i>
+          Detalhes da OS
+        </h2>
+        <button class="modal-close" onclick="fecharModalDetalhesOS()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="detalhes-os-content">
+          <!-- Coluna 1 -->
+          <div>
+            <div class="detalhes-section">
+              <h4 class="dethes-title">Informações do Cliente</h4>
+              <div class="detalhes-grid">
+                <div class="detalhes-item">
+                  <span class="detalhes-label">Nome</span>
+                  <span class="detalhes-value" id="detalhes-cliente-nome">-</span>
                 </div>
-
-                <div class="detalhes-section" style="margin-top: 16px">
-                  <h4 class="detalhes-title">Defeito Reclamado</h4>
-                  <p
-                    id="detalhes-defeito"
-                    style="color: var(--text); font-size: 14px"
-                  >
-                    -
-                  </p>
+                <div class="detalhes-item">
+                  <span class="detalhes-label">Telefone</span>
+                  <span class="detalhes-value" id="detalhes-cliente-telefone">-</span>
+                </div>
+                <div class="detalhes-item">
+                  <span class="detalhes-label">WhatsApp</span>
+                  <span class="detalhes-value" id="detalhes-cliente-whatsapp">-</span>
                 </div>
               </div>
+            </div>
 
-              <!-- Coluna 2 -->
-              <div>
-                <div class="detalhes-section">
-                  <h4 class="detalhes-title">Fotos do Aparelho</h4>
-                  <div class="fotos-grid">
-                    <div class="foto-thumb">
-                      <img
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E"
-                        alt="Foto"
-                      />
-                    </div>
-                    <div class="foto-thumb">
-                      <img
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E"
-                        alt="Foto"
-                      />
-                    </div>
-                    <div class="foto-thumb">
-                      <img
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E"
-                        alt="Foto"
-                      />
-                    </div>
-                    <div class="foto-thumb">
-                      <img
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E"
-                        alt="Foto"
-                      />
-                    </div>
-                  </div>
+            <div class="detalhes-section" style="margin-top: 16px">
+              <h4 class="detalhes-title">Informações do Aparelho</h4>
+              <div class="detalhes-grid">
+                <div class="detalhes-item">
+                  <span class="detalhes-label">Marca/Modelo</span>
+                  <span class="detalhes-value" id="detalhes-aparelho">-</span>
                 </div>
-
-                <div class="detalhes-section" style="margin-top: 16px">
-                  <h4 class="detalhes-title">Checklist</h4>
-                  <div class="detalhes-grid" id="detalhes-checklist">
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">Liga</span>
-                      <span class="detalhes-value" id="detalhes-liga">-</span>
-                    </div>
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">WiFi</span>
-                      <span class="detalhes-value" id="detalhes-wifi">-</span>
-                    </div>
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">Touch</span>
-                      <span class="detalhes-value" id="detalhes-touch">-</span>
-                    </div>
-                    <div class="detalhes-item">
-                      <span class="detalhes-label">Botões</span>
-                      <span class="detalhes-value" id="detalhes-botoes">-</span>
-                    </div>
-                  </div>
+                <div class="detalhes-item">
+                  <span class="detalhes-label">Cor</span>
+                  <span class="detalhes-value" id="detalhes-cor">-</span>
                 </div>
+                <div class="detalhes-item">
+                  <span class="detalhes-label">IMEI</span>
+                  <span class="detalhes-value" id="detalhes-imei">-</span>
+                </div>
+                <div class="detalhes-item">
+                  <span class="detalhes-label">Senha</span>
+                  <span class="detalhes-value" id="detalhes-senha">-</span>
+                </div>
+              </div>
+            </div>
 
-                <div class="detalhes-section" style="margin-top: 16px">
-                  <h4 class="detalhes-title">Histórico de Alterações</h4>
-                  <div class="log-container" id="detalhes-log">
-                    <div class="log-item">
-                      <span class="log-time" id="detalhes-log-time">-</span>
-                      <span class="log-text">OS criada por Admin</span>
-                    </div>
-                  </div>
+            <div class="detalhes-section" style="margin-top: 16px">
+              <h4 class="detalhes-title">Defeito Reclamado</h4>
+              <p id="detalhes-defeito" style="color: var(--text); font-size: 14px">
+                -
+              </p>
+            </div>
+          </div>
+
+          <!-- Coluna 2 -->
+          <div>
+            <div class="detalhes-section">
+              <h4 class="detalhes-title">Fotos do Aparelho</h4>
+              <div class="fotos-grid">
+                <div class="foto-thumb">
+                  <img
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E"
+                    alt="Foto" />
+                </div>
+                <div class="foto-thumb">
+                  <img
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E"
+                    alt="Foto" />
+                </div>
+                <div class="foto-thumb">
+                  <img
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E"
+                    alt="Foto" />
+                </div>
+                <div class="foto-thumb">
+                  <img
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E"
+                    alt="Foto" />
+                </div>
+              </div>
+            </div>
+
+            <div class="detalhes-section" style="margin-top: 16px">
+              <h4 class="detalhes-title">Checklist</h4>
+              <div class="detalhes-grid" id="detalhes-checklist">
+                <div class="detalhes-item">
+                  <span class="detalhes-label">Liga</span>
+                  <span class="detalhes-value" id="detalhes-liga">-</span>
+                </div>
+                <div class="detalhes-item">
+                  <span class="detalhes-label">WiFi</span>
+                  <span class="detalhes-value" id="detalhes-wifi">-</span>
+                </div>
+                <div class="detalhes-item">
+                  <span class="detalhes-label">Touch</span>
+                  <span class="detalhes-value" id="detalhes-touch">-</span>
+                </div>
+                <div class="detalhes-item">
+                  <span class="detalhes-label">Botões</span>
+                  <span class="detalhes-value" id="detalhes-botoes">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="detalhes-section" style="margin-top: 16px">
+              <h4 class="detalhes-title">Histórico de Alterações</h4>
+              <div class="log-container" id="detalhes-log">
+                <div class="log-item">
+                  <span class="log-time" id="detalhes-log-time">-</span>
+                  <span class="log-text">OS criada por Admin</span>
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="fecharModalDetalhesOS()">
-              Fechar
-            </button>
-            <button
-              class="btn btn-primary"
-              onclick="imprimirOS()"
-              id="imprimir-os-link"
-            >
-              <i class="fas fa-print"></i>
-              Imprimir
-            </button>
-          </div>
         </div>
       </div>
-
-      <!-- Modal Editar OS -->
-      <div class="modal-overlay" id="modal-editar-os">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 class="modal-title">
-              <i class="fas fa-edit"></i>
-              Editar Ordem de Serviço
-            </h2>
-            <button class="modal-close" onclick="fecharModalEditarOS()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="modal-body">
-            <form class="editar-os-form" id="form-editar-os">
-              <!-- Seção 1: Identificação -->
-              <div class="form-section">
-                <h3 class="section-title">
-                  <i class="fas fa-user"></i>
-                  Identificação (Quem?)
-                </h3>
-                <input type="hidden" id="edit-os-id" />
-                <div class="form-group">
-                  <label class="form-label">Nome do Cliente</label>
-                  <input
-                    type="text"
-                    class="form-input"
-                    id="edit-nome-cliente"
-                    required
-                  />
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">WhatsApp</label>
-                    <input
-                      type="tel"
-                      class="form-input"
-                      id="edit-whatsapp-cliente"
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">E-mail</label>
-                    <input
-                      type="email"
-                      class="form-input"
-                      id="edit-email-cliente"
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Seção 2: O Aparelho -->
-              <div class="form-section">
-                <h3 class="section-title">
-                  <i class="fas fa-mobile-alt"></i>
-                  O Aparelho (O Quê?)
-                </h3>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Marca</label>
-                    <select
-                      class="form-select"
-                      id="edit-marca-aparelho"
-                      required
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="apple">Apple</option>
-                      <option value="samsung">Samsung</option>
-                      <option value="motorola">Motorola</option>
-                      <option value="xiaomi">Xiaomi</option>
-                      <option value="realme">Realme</option>
-                      <option value="infinix">Infinix</option>
-                      <option value="outros">Outros</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Modelo</label>
-                    <input
-                      type="text"
-                      class="form-input"
-                      id="edit-modelo-aparelho"
-                      placeholder="Ex: iPhone 13 Pro"
-                      required
-                    />
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Cor</label>
-                    <input
-                      type="text"
-                      class="form-input"
-                      id="edit-cor-aparelho"
-                      placeholder="Ex: Preto"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">IMEI</label>
-                    <input
-                      type="text"
-                      class="form-input"
-                      id="edit-imei-aparelho"
-                      placeholder="000000000000000"
-                    />
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">
-                    <i class="fas fa-lock"></i> Senha de Desenho / Numérica
-                  </label>
-                  <input
-                    type="text"
-                    class="form-input"
-                    id="edit-senha-aparelho"
-                    placeholder="Senha para testes"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Defeito Reclamado</label>
-                  <textarea
-                    class="form-textarea"
-                    id="edit-defeito-reclamado"
-                    placeholder="Descreva o problema relatado pelo cliente..."
-                    required
-                  ></textarea>
-                </div>
-
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Previsão</label>
-                    <div class="form-input" id="edit-previsao">-</div>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Valor do Orçamento (R$)</label>
-                    <input
-                      type="number"
-                      class="form-input"
-                      id="Valor-orcamento"
-                      placeholder="0,00"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="fecharModalEditarOS()">
-              Cancelar
-            </button>
-            <button class="btn btn-primary" onclick="salvarEdicaoOS()">
-              <i class="fas fa-save"></i>
-              Salvar Alterações
-            </button>
-          </div>
-        </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModalDetalhesOS()">
+          Fechar
+        </button>
+        <button class="btn btn-primary" onclick="imprimirOS()" id="imprimir-os-link">
+          <i class="fas fa-print"></i>
+          Imprimir
+        </button>
       </div>
-
-      <!-- Modal OS Finalizadas -->
-      <div class="modal-overlay" id="modal-os-finalizadas">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 class="modal-title">
-              <i class="fas fa-clipboard-check"></i>
-              Ordens de Serviço Finalizadas
-            </h2>
-            <button class="modal-close" onclick="fecharModalOrdensFinalizadas()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="modal-body">
-            <table class="os-table">
-              <thead>
-                <tr>
-                  <th>OS</th>
-                  <th>Cliente</th>
-                  <th>Aparelho</th>
-                  <th>Status</th>
-                  <th>Previsão</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="os-finalizadas-table-body">
-                <!-- OS finalizadas serão inseridas aqui -->
-              </tbody>
-            </table>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="fecharModalOrdensFinalizadas()">
-              Fechar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Clientes Cadastrados -->
-      <div class="modal-overlay" id="modal-clientes-cadastrados">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 class="modal-title">
-              <i class="fas fa-users"></i>
-              Clientes Cadastrados
-            </h2>
-            <button class="modal-close" onclick="fecharModalClientesCadastrados()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="modal-body">
-            <table class="os-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>CPF</th>
-                  <th>Telefone</th>
-                  <th>E-mail</th>
-                </tr>
-              </thead>
-              <tbody id="clientes-cadastrados-body">
-                <!-- Clientes serão inseridos aqui -->
-              </tbody>
-            </table>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="fecharModalClientesCadastrados()">
-              Fechar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!--Financeiro-->
-
-      <div class="modal-overlay" id="modal-financeiro">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title">
-        <i class="fas fa-cash-register" style="color: var(--primary);"></i> 
-        Financeiro
-      </h2>
-      <button class="modal-close" onclick="fecharModalFinanceiro()">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    
-    <div class="modal-body">
-      <div style="background: linear-gradient(135deg, var(--success), #059669); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px;">
-        <span style="font-size: 13px; color: rgba(255,255,255,0.8);">FATURAMENTO MENSAL</span>
-        <h2 id="fin-faturamento" style="font-size: 32px; color: white; margin-top: 5px;">R$ 0,00</h2>
-      </div>
-
-      <div class="form-row">
-         <div class="form-section" style="text-align: center;">
-            <span class="form-label">OS FECHADAS</span>
-            <h3 id="fin-qtd-concluida">0</h3>
-         </div>
-         <div class="form-section" style="text-align: center;">
-            <span class="form-label">TICKET MÉDIO</span>
-            <h3 id="fin-ticket-medio">R$ 0,00</h3>
-         </div>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="fecharModalFinanceiro()">Fechar</button>
     </div>
   </div>
-</div>
-      <!-- Toast Container -->
-      <div class="toast-container" id="toast-container"></div>
 
-      <!-- Firebase -->
-      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-      <script src="../js/dashboard.js"></script>
-    </tbody>
-  </body>
+  <!-- Modal Editar OS -->
+  <div class="modal-overlay" id="modal-editar-os">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-edit"></i>
+          Editar Ordem de Serviço
+        </h2>
+        <button class="modal-close" onclick="fecharModalEditarOS()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form class="editar-os-form" id="form-editar-os">
+          <!-- Seção 1: Identificação -->
+          <div class="form-section">
+            <h3 class="section-title">
+              <i class="fas fa-user"></i>
+              Identificação (Quem?)
+            </h3>
+            <input type="hidden" id="edit-os-id" />
+            <div class="form-group">
+              <label class="form-label">Nome do Cliente</label>
+              <input type="text" class="form-input" id="edit-nome-cliente" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">WhatsApp</label>
+                <input type="tel" class="form-input" id="edit-whatsapp-cliente" placeholder="(00) 00000-0000" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">E-mail</label>
+                <input type="email" class="form-input" id="edit-email-cliente" placeholder="email@exemplo.com" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Seção 2: O Aparelho -->
+          <div class="form-section">
+            <h3 class="section-title">
+              <i class="fas fa-mobile-alt"></i>
+              O Aparelho (O Quê?)
+            </h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Marca</label>
+                <select class="form-select" id="edit-marca-aparelho" required>
+                  <option value="">Selecione...</option>
+                  <option value="apple">Apple</option>
+                  <option value="samsung">Samsung</option>
+                  <option value="motorola">Motorola</option>
+                  <option value="xiaomi">Xiaomi</option>
+                  <option value="realme">Realme</option>
+                  <option value="infinix">Infinix</option>
+                  <option value="outros">Outros</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Modelo</label>
+                <input type="text" class="form-input" id="edit-modelo-aparelho" placeholder="Ex: iPhone 13 Pro"
+                  required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Cor</label>
+                <input type="text" class="form-input" id="edit-cor-aparelho" placeholder="Ex: Preto" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">IMEI</label>
+                <input type="text" class="form-input" id="edit-imei-aparelho" placeholder="000000000000000" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                <i class="fas fa-lock"></i> Senha de Desenho / Numérica
+              </label>
+              <input type="text" class="form-input" id="edit-senha-aparelho" placeholder="Senha para testes" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Defeito Reclamado</label>
+              <textarea class="form-textarea" id="edit-defeito-reclamado"
+                placeholder="Descreva o problema relatado pelo cliente..." required></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Previsão</label>
+                <div class="form-input" id="edit-previsao">-</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Valor do Orçamento (R$)</label>
+                <input type="number" class="form-input" id="Valor-orcamento" placeholder="0,00" min="0" step="0.01" />
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModalEditarOS()">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" onclick="salvarEdicaoOS()">
+          <i class="fas fa-save"></i>
+          Salvar Alterações
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal OS Finalizadas -->
+  <div class="modal-overlay" id="modal-os-finalizadas">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-clipboard-check"></i>
+          Ordens de Serviço Finalizadas
+        </h2>
+        <button class="modal-close" onclick="fecharModalOrdensFinalizadas()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="os-table">
+          <thead>
+            <tr>
+              <th>OS</th>
+              <th>Cliente</th>
+              <th>Aparelho</th>
+              <th>Status</th>
+              <th>Previsão</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="os-finalizadas-table-body">
+            <!-- OS finalizadas serão inseridas aqui -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModalOrdensFinalizadas()">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Clientes Cadastrados -->
+  <div class="modal-overlay" id="modal-clientes-cadastrados">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-users"></i>
+          Clientes Cadastrados
+        </h2>
+        <input class="checklist-clientes" id="busca-cliente-cadastrados" type="text" placeholder="Buscar cliente..."
+          oninput="buscarClientesCadastrados()" />
+        <button class="modal-close" onclick="fecharModalClientesCadastrados()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="os-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>Telefone</th>
+              <th>E-mail</th>
+            </tr>
+          </thead>
+          <tbody id="clientes-cadastrados-body">
+            <!-- Clientes serão inseridos aqui -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModalClientesCadastrados()">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!--Financeiro-->
+
+  <div class="modal-overlay" id="modal-financeiro">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-cash-register" style="color: var(--primary);"></i>
+          Financeiro
+        </h2>
+        <button class="modal-close" onclick="fecharModalFinanceiro()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div
+          style="background: linear-gradient(135deg, var(--success), #059669); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px;">
+          <span style="font-size: 13px; color: rgba(255,255,255,0.8);">FATURAMENTO MENSAL</span>
+          <h2 id="fin-faturamento" style="font-size: 32px; color: white; margin-top: 5px;">R$ 0,00</h2>
+        </div>
+
+        <div class="form-row">
+          <div class="form-section" style="text-align: center;">
+            <span class="form-label">OS FECHADAS</span>
+            <h3 id="fin-qtd-concluida">0</h3>
+          </div>
+          <div class="form-section" style="text-align: center;">
+            <span class="form-label">TICKET MÉDIO</span>
+            <h3 id="fin-ticket-medio">R$ 0,00</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="fecharModalFinanceiro()">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../js/dashboard.js?v=20260302-0105"></script>
+</body>
+
 </html>

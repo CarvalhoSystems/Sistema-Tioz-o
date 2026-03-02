@@ -11,10 +11,20 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const db = firebase.firestore();
 const auth = firebase.auth();
-const storage = firebase.storage();
+const storage = firebase.app().storage();
+const LOCAL_ORDENS_KEY = "ordens_servico_local";
+const BUCKET_STORAGE_ESPERADO = firebaseConfig.storageBucket;
+const ORIGENS_DESENVOLVIMENTO = [
+  "http://127.0.0.1:5500",
+  "http://localhost:5500",
+];
+let storageUploadHabilitado = true;
+let avisoStorageJaExibido = false;
 
 //================
 // mostrar o administrador logado
@@ -38,18 +48,114 @@ let checklistData = {
   botoes: null,
 };
 let fotosOS = [null, null, null, null];
+let arquivosParaUpload = [null, null, null, null];
 let osSelecionada = null;
+
+function normalizarUrlFoto(url) {
+  if (typeof url !== "string") return url;
+
+  return url
+    .replace(
+      "/b/assistencia-nascimento-876a0.appspot.com/",
+      `/b/${BUCKET_STORAGE_ESPERADO}/`,
+    )
+    .replace(
+      "/b/assistencia-nascimento-876a0.firebasestorage.app/",
+      `/b/${BUCKET_STORAGE_ESPERADO}/`,
+    );
+}
+
+function converterParaData(valor) {
+  if (!valor) return null;
+  if (valor?.toDate) return valor.toDate();
+  const data = new Date(valor);
+  return Number.isNaN(data.getTime()) ? null : data;
+}
+
+function salvarOrdensLocal() {
+  try {
+    localStorage.setItem(LOCAL_ORDENS_KEY, JSON.stringify(ordensServico));
+  } catch (error) {
+    console.error("Erro ao salvar OS localmente:", error);
+  }
+}
+
+function carregarOrdensLocal() {
+  try {
+    const dados = localStorage.getItem(LOCAL_ORDENS_KEY);
+    if (!dados) return false;
+    const parsed = JSON.parse(dados);
+    if (!Array.isArray(parsed)) return false;
+    ordensServico = parsed.map((os) => ({
+      ...os,
+      fotos: Array.isArray(os?.fotos)
+        ? os.fotos.map((foto) => normalizarUrlFoto(foto))
+        : os?.fotos,
+    }));
+    return true;
+  } catch (error) {
+    console.error("Erro ao carregar OS localmente:", error);
+    return false;
+  }
+}
 
 //======================
 // Initialization
 //======================
 document.addEventListener("DOMContentLoaded", () => {
+  aplicarFallbackUploadEmAmbienteLocal();
+  validarBucketStorage();
   verificarAuth();
   setupEventListeners();
   carregarOrdens();
   carregarClientes();
   atualizarPrevisaoEntrega();
 });
+
+function aplicarFallbackUploadEmAmbienteLocal() {
+  try {
+    const origemAtual = window.location.origin;
+    const ambienteLocal = ORIGENS_DESENVOLVIMENTO.includes(origemAtual);
+
+    if (!ambienteLocal) return;
+
+    storageUploadHabilitado = false;
+
+    if (!avisoStorageJaExibido) {
+      avisoStorageJaExibido = true;
+      Swal.fire({
+        icon: "info",
+        title: "Modo local detectado",
+        text: "Uploads de foto foram desativados temporariamente para evitar bloqueio de CORS no localhost. A OS será criada normalmente sem fotos no Firebase Storage.",
+      });
+    }
+  } catch (error) {
+    console.error("Erro ao aplicar fallback de ambiente local:", error);
+  }
+}
+
+function validarBucketStorage() {
+  try {
+    const refRaiz = storage.ref().toString();
+    const bucketCorreto = refRaiz.includes(BUCKET_STORAGE_ESPERADO);
+
+    if (!bucketCorreto) {
+      storageUploadHabilitado = false;
+      console.error("Bucket do Storage incorreto:", refRaiz);
+
+      if (!avisoStorageJaExibido) {
+        avisoStorageJaExibido = true;
+        Swal.fire({
+          icon: "warning",
+          title: "Bucket do Firebase Storage incorreto",
+          text: "Atualize/recarregue a página (Ctrl+F5). O sistema detectou configuração antiga em cache.",
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Erro ao validar bucket do storage:", error);
+  }
+}
 
 //======================
 // Authentication
@@ -212,7 +318,7 @@ function resetarFormularioNovaOS() {
   document.getElementById("whatsapp-cliente").value = "";
   document.getElementById("email-cliente").value = "";
 
-  document.getElementById("previsao-entrega").value = ""; // Reset checklist
+  document.getElementById("previsao-entrega").textContent = "--/--/----";
   checklistData = {
     liga: null,
     wifi: null,
@@ -225,6 +331,7 @@ function resetarFormularioNovaOS() {
 
   // Reset photos
   fotosOS = [null, null, null, null];
+  arquivosParaUpload = [null, null, null, null];
   document.querySelectorAll(".photo-slot").forEach((slot) => {
     slot.classList.remove("has-photo");
     const img = slot.querySelector("img");
@@ -393,27 +500,123 @@ function renderizarClientesCadastrados() {
     .join("");
 }
 
+//============================
+// Buscar Clientes Cadastrados
+//=============================
+
+function buscarClientesCadastrados() {
+  const termo = document
+    .getElementById("busca-cliente-cadastrados")
+    .value.toLowerCase();
+  const resultados = document.getElementById("clientes-cadastrados-body");
+
+  // 1. Filtra a lista de clientes com base no nome, cpf ou e-mail
+  const clientesFiltrados = clientes.filter((c) => {
+    return (
+      c.nome.toLowerCase().includes(termo) ||
+      (c.cpf && c.cpf.includes(termo)) ||
+      (c.email && c.email.toLowerCase().includes(termo))
+    );
+  });
+
+  // 2. Se o campo estiver vazio, você decide: mostrar tudo ou mostrar aviso
+  if (termo.length === 0) {
+    // Aqui você pode chamar a função que carrega a lista completa original
+    // resultados.innerHTML = "";
+    return;
+  }
+
+  // 3. Se não encontrar ninguém no filtro
+  if (clientesFiltrados.length === 0) {
+    resultados.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <i class="fas fa-search" style="font-size: 40px; margin-bottom: 10px;"></i><br>
+          Nenhum cliente encontrado para "${termo}".
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // 4. Renderiza os resultados filtrados
+  resultados.innerHTML = clientesFiltrados
+    .map(
+      (c) => `
+      <tr>
+        <td>${c.nome}</td>
+        <td>${c.cpf || "-"}</td>
+        <td>${c.telefone || "-"}</td>
+        <td>${c.email || "-"}</td>
+      </tr>
+    `,
+    )
+    .join("");
+}
+
 //======================
 // OS Functions
 //======================
 async function carregarOrdens() {
   try {
+    let cacheLocal = [];
+    try {
+      cacheLocal = JSON.parse(localStorage.getItem(LOCAL_ORDENS_KEY) || "[]");
+    } catch {
+      cacheLocal = [];
+    }
+    const cacheMap = new Map(
+      Array.isArray(cacheLocal)
+        ? cacheLocal.filter((item) => item?.id).map((item) => [item.id, item])
+        : [],
+    );
+
     const snapshot = await db
       .collection("ordens_servico")
       .orderBy("createdAt", "desc")
       .get();
 
-    ordensServico = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    ordensServico = snapshot.docs.map((doc) => {
+      const osFirestore = {
+        id: doc.id,
+        ...doc.data(),
+      };
+
+      const osLocal = cacheMap.get(osFirestore.id);
+      const semFotosNoFirestore =
+        !Array.isArray(osFirestore.fotos) || osFirestore.fotos.length === 0;
+      const temFotosNoLocal =
+        Array.isArray(osLocal?.fotos) && osLocal.fotos.length > 0;
+
+      if (Array.isArray(osFirestore.fotos)) {
+        osFirestore.fotos = osFirestore.fotos.map((foto) =>
+          normalizarUrlFoto(foto),
+        );
+      }
+
+      if (semFotosNoFirestore && temFotosNoLocal) {
+        osFirestore.fotos = osLocal.fotos.map((foto) =>
+          normalizarUrlFoto(foto),
+        );
+      }
+
+      return osFirestore;
+    });
+
+    salvarOrdensLocal();
 
     atualizarDashboard();
     renderizarOrdens();
   } catch (error) {
     console.error("Erro ao carregar ordens:", error);
-    // Load demo data if Firestore fails
-    carregarDadosDemo();
+
+    const carregouLocal = carregarOrdensLocal();
+    if (!carregouLocal) {
+      ordensServico = [];
+    }
+
+    atualizarDashboard();
+    renderizarOrdens();
   }
 }
 
@@ -430,7 +633,7 @@ function carregarDadosDemo() {
       status: "manutencao",
       defeito: "Tela quebrada",
       createdAt: new Date(),
-      previsao: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      previsao: new Date(Date.now()),
     },
     {
       id: "OS-002",
@@ -454,7 +657,7 @@ function carregarDadosDemo() {
       status: "orcamento",
       defeito: "Não carrega",
       createdAt: new Date(),
-      previsao: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      previsao: new Date(Date.now()),
     },
     {
       id: "OS-004",
@@ -466,63 +669,92 @@ function carregarDadosDemo() {
       status: "peca",
       defeito: "Problema no botão power",
       createdAt: new Date(),
-      previsao: new Date(Date.now() + 72 * 60 * 60 * 1000),
+      previsao: new Date(Date.now()),
     },
   ];
 
   atualizarDashboard();
   renderizarOrdens();
+  atualizarPrevisaoEntrega();
 }
 
 async function salvarNovaOS() {
-  // Validate required fields
-  const nomeCliente = document.getElementById("nome-cliente").value;
-  const marca = document.getElementById("marca-aparelho").value;
-  const modelo = document.getElementById("modelo-aparelho").value;
-  const defeito = document.getElementById("defeito-reclamado").value;
-
-  if (!nomeCliente || !marca || !modelo || !defeito) {
-    Swal.fire("Erro", "Preencha todos os campos obrigatórios!", "warning");
-    return;
-  }
-
-  // Generate OS number
-  const osNumber = generateOSNumber();
-
-  // Prepare OS data
-  const osData = {
-    id: osNumber,
-    cliente: {
-      nome: nomeCliente,
-      telefone: document.getElementById("whatsapp-cliente").value,
-      email: document.getElementById("email-cliente").value,
-    },
-    marca: marca,
-    modelo: modelo,
-    cor: document.getElementById("cor-aparelho").value,
-    imei: document.getElementById("imei-aparelho").value,
-    senha: document.getElementById("senha-aparelho").value,
-    defeito: defeito,
-    status: "orcamento",
-    checklist: { ...checklistData },
-    fotos: [...fotosOS],
-    previsao: new Date(Date.now() + 48 * 60 * 60 * 1000),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    log: [
-      {
-        timestamp: new Date(),
-        text: "OS criada",
-        user: "Admin",
-      },
-    ],
-  };
+  let osData = null;
 
   try {
-    await db.collection("ordens_servico").add(osData);
+    // Validate required fields
+    const nomeCliente = document.getElementById("nome-cliente")?.value;
+    const marca = document.getElementById("marca-aparelho")?.value;
+    const modelo = document.getElementById("modelo-aparelho")?.value;
+    const defeito = document.getElementById("defeito-reclamado")?.value;
+
+    if (!nomeCliente || !marca || !modelo || !defeito) {
+      Swal.fire("Erro", "Preencha todos os campos obrigatórios!", "warning");
+      return;
+    }
+
+    // Generate OS number
+    const osNumber = generateOSNumber();
+
+    // Previsão selecionada no calendário (se houver)
+    const dataPrevisaoSelecionada =
+      document.getElementById("data-manual")?.value || "";
+    const previsaoEntrega = dataPrevisaoSelecionada
+      ? new Date(`${dataPrevisaoSelecionada}T12:00:00`)
+      : new Date();
+
+    // Upload das fotos para o Firebase Storage com tolerância a falhas
+    const resultadosFotos = await Promise.allSettled(
+      fotosOS.map((foto, index) => uploadFotoOS(foto, osNumber, index)),
+    );
+    const fotosSalvas = resultadosFotos
+      .filter((resultado) => resultado.status === "fulfilled")
+      .map((resultado) => resultado.value)
+      .filter(Boolean);
+
+    const fotosLocais = fotosOS.filter(Boolean);
+    const fotosParaUsoLocal =
+      fotosSalvas.length > 0 ? fotosSalvas : fotosLocais;
+
+    // Prepare OS data
+    osData = {
+      id: osNumber,
+      cliente: {
+        nome: nomeCliente,
+        telefone: document.getElementById("whatsapp-cliente")?.value || "",
+        email: document.getElementById("email-cliente")?.value || "",
+      },
+      marca: marca,
+      modelo: modelo,
+      cor: document.getElementById("cor-aparelho")?.value || "",
+      imei: document.getElementById("imei-aparelho")?.value || "",
+      senha: document.getElementById("senha-aparelho")?.value || "",
+      defeito: defeito,
+      status: "orcamento",
+      checklist: { ...checklistData },
+      fotos: fotosParaUsoLocal,
+      previsao: previsaoEntrega,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      log: [
+        {
+          timestamp: new Date(),
+          text: "OS criada",
+          user: "Admin",
+        },
+      ],
+    };
+
+    const osDataFirestore = {
+      ...osData,
+      fotos: fotosSalvas,
+    };
+
+    await db.collection("ordens_servico").add(osDataFirestore);
 
     // Add to local array
     ordensServico.unshift(osData);
+    salvarOrdensLocal();
 
     Swal.fire({
       icon: "success",
@@ -536,17 +768,132 @@ async function salvarNovaOS() {
     renderizarOrdens();
   } catch (error) {
     console.error("Erro ao criar OS:", error);
-    // Save locally for demo
-    ordensServico.unshift(osData);
-    atualizarDashboard();
-    renderizarOrdens();
-    Swal.fire({
-      icon: "success",
-      title: "OS Criada!",
-      text: `Ordem de Serviço ${osNumber} criada com sucesso (modo local).`,
-      timer: 2000,
-    });
-    fecharModalNovaOS();
+
+    // fallback local para não perder o atendimento
+    try {
+      if (osData) {
+        ordensServico.unshift(osData);
+      }
+      salvarOrdensLocal();
+      atualizarDashboard();
+      renderizarOrdens();
+
+      Swal.fire({
+        icon: "warning",
+        title: "OS criada em modo local",
+        text: "Não foi possível gravar no Firebase agora. A OS ficou salva localmente neste computador.",
+      });
+      fecharModalNovaOS();
+    } catch (fallbackError) {
+      console.error("Erro no fallback local:", fallbackError);
+      Swal.fire(
+        "Erro ao criar OS",
+        "Não foi possível salvar agora. Verifique conexão/permissões do Firebase e tente novamente.",
+        "error",
+      );
+    }
+  }
+}
+
+async function uploadFotoOS(fotoDataUrl, osId, index) {
+  try {
+    if (!storageUploadHabilitado) return null;
+    if (!fotoDataUrl || typeof fotoDataUrl !== "string") return null;
+    if (!fotoDataUrl.startsWith("data:image")) return fotoDataUrl;
+
+    const response = await fetch(fotoDataUrl);
+    const blob = await response.blob();
+    const extensao = blob.type?.split("/")[1] || "jpg";
+    const fileRef = storage
+      .ref()
+      .child(
+        `ordens_servico/${osId}/foto_${index + 1}_${Date.now()}.${extensao}`,
+      );
+
+    const snapshot = await fileRef.put(blob);
+    return await snapshot.ref.getDownloadURL();
+  } catch (error) {
+    console.error(`Erro ao enviar foto ${index + 1}:`, error);
+
+    const mensagem = String(error?.message || "").toLowerCase();
+    const erroPermanente =
+      mensagem.includes("cors") ||
+      mensagem.includes("404") ||
+      mensagem.includes("bucket") ||
+      mensagem.includes("unauthorized") ||
+      mensagem.includes("permission");
+
+    if (erroPermanente) {
+      storageUploadHabilitado = false;
+
+      if (!avisoStorageJaExibido) {
+        avisoStorageJaExibido = true;
+        Swal.fire({
+          icon: "warning",
+          title: "Upload de fotos desativado temporariamente",
+          text: "Detectei erro de configuração/permissão no Firebase Storage (CORS/bucket). As próximas OS serão salvas sem upload de foto até ajustar o Firebase.",
+        });
+      }
+    }
+
+    return null;
+  }
+}
+
+async function salvarOrdemServicoCompleta() {
+  const apiKey = "4f64e86441e6f74f1ee842ca3b1a4c62";
+  const linksDasFotos = [];
+
+  Swal.fire({
+    title: "Enviando fotos...",
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(),
+  });
+
+  try {
+    for (let i = 0; i < arquivosParaUpload.length; i++) {
+      const arquivo = arquivosParaUpload[i];
+
+      if (arquivo) {
+        const formData = new FormData();
+        formData.append("image", arquivo);
+
+        const response = await fetch(
+          `https://api.imgbb.com/1/upload?key=${apiKey}`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+
+        const resultado = await response.json();
+        const link = resultado?.data?.url || "";
+        linksDasFotos.push(link);
+      } else {
+        linksDasFotos.push("");
+      }
+    }
+
+    const clienteSelecionado =
+      document.getElementById("nome-cliente")?.value ||
+      document.getElementById("busca-cliente-cadastrados")?.value ||
+      "Cliente não informado";
+
+    const dadosOS = {
+      cliente: clienteSelecionado,
+      fotos: linksDasFotos,
+      data: new Date().toISOString(),
+      createdAt: new Date(),
+    };
+
+    await db.collection("ordens_servico").add(dadosOS);
+
+    Swal.fire("Sucesso!", "OS salva com as fotos!", "success");
+    return dadosOS;
+  } catch (error) {
+    console.error(error);
+    Swal.fire("Erro", "Falha ao subir imagens", "error");
+    throw error;
   }
 }
 
@@ -808,6 +1155,7 @@ async function alterarStatus(osId, novoStatus) {
 
     atualizarDashboard();
     renderizarOrdens();
+    salvarOrdensLocal();
 
     Swal.fire({
       icon: "success",
@@ -821,6 +1169,7 @@ async function alterarStatus(osId, novoStatus) {
     os.status = novoStatus;
     atualizarDashboard();
     renderizarOrdens();
+    salvarOrdensLocal();
   }
 }
 
@@ -849,6 +1198,7 @@ async function excluirOS(osId) {
   }
 
   ordensServico = ordensServico.filter((os) => os.id !== osId);
+  salvarOrdensLocal();
 
   if (osSelecionada?.id === osId) {
     fecharModalDetalhesOS();
@@ -944,7 +1294,7 @@ function abrirModalEditarOS(os) {
   document.getElementById("edit-senha-aparelho").value = os.senha || "";
   document.getElementById("edit-defeito-reclamado").value = os.defeito || "";
   document.getElementById("edit-previsao").textContent = formatarData(
-    os.previsao,
+    os.previsao || "",
   );
   document.getElementById("Valor-orcamento").value = os.orcamento || "";
   // Abrir modal
@@ -1009,6 +1359,7 @@ async function salvarEdicaoOS() {
     if (index !== -1) {
       ordensServico[index] = osDataAtualizada;
     }
+    salvarOrdensLocal();
 
     Swal.fire({
       icon: "success",
@@ -1026,6 +1377,7 @@ async function salvarEdicaoOS() {
     if (index !== -1) {
       ordensServico[index] = osDataAtualizada;
     }
+    salvarOrdensLocal();
 
     Swal.fire({
       icon: "success",
@@ -1063,6 +1415,31 @@ function renderizarDetalhesOS(os) {
         minimumFractionDigits: 2,
       })}`
     : "-";
+
+  // Fotos
+  const fotosContainer = document.querySelector(
+    "#modal-detalhes-os .fotos-grid",
+  );
+  if (fotosContainer) {
+    const fotosValidas = (os.fotos || []).filter(Boolean);
+    if (fotosValidas.length > 0) {
+      fotosContainer.innerHTML = fotosValidas
+        .map(
+          (foto, index) => `
+            <div class="foto-thumb">
+              <img src="${foto}" alt="Foto ${index + 1}" />
+            </div>
+          `,
+        )
+        .join("");
+    } else {
+      fotosContainer.innerHTML = `
+        <div class="foto-thumb" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+          Sem fotos anexadas nesta OS.
+        </div>
+      `;
+    }
+  }
 
   // Checklist
   const checklist = os.checklist || {};
@@ -1117,20 +1494,14 @@ function renderizarDetalhesOS(os) {
 //======================
 // Print Function
 //======================
-const imprimirOsBtn = document.getElementById("imprimir-os-link");
-if (imprimirOsBtn) {
-  imprimirOsBtn.addEventListener("click", function () {
-    if (osSelecionada) {
-      imprimirOS(osSelecionada.id);
-    } else {
-      Swal.fire("Erro", "Nenhuma OS selecionada!", "error");
-    }
-  });
-}
-
 function imprimirOS(osId) {
-  const os = ordensServico.find((o) => o.id === osId);
+  const idParaImpressao = osId || osSelecionada?.id;
+  if (!idParaImpressao) return;
+
+  const os = ordensServico.find((o) => o.id === idParaImpressao);
   if (!os) return;
+
+  const fotosValidas = (os.fotos || []).filter(Boolean);
 
   // Create printable content
   const printContent = `
@@ -1224,15 +1595,19 @@ function imprimirOS(osId) {
       </div>
         <div class="section">
           <h2>Fotos</h2>  
-          ${os.fotos
-            .map(
-              (foto, index) => `  
+          ${
+            fotosValidas.length > 0
+              ? fotosValidas
+                  .map(
+                    (foto, index) => `  
             <div class="photo">
               <img src="${foto}" alt="Foto ${index + 1}" style="max-width: 100%; margin-bottom: 10px;">
             </div>
             `,
-            )
-            .join("")}
+                  )
+                  .join("")
+              : "<p>Sem fotos anexadas.</p>"
+          }
         </div>
         <div class="section">
           <h2>Previsão de Entrega</h2>
@@ -1271,29 +1646,40 @@ function adcionarImpressora() {}
 // Photo Capture
 //======================
 function capturarFoto(index) {
-  // Create file input
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
-  input.capture = "environment";
 
   input.onchange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // 1. SALVA O ARQUIVO REAL (Para mandar pro ImgBB depois)
+      arquivosParaUpload[index] = file;
+
       const reader = new FileReader();
       reader.onload = (event) => {
-        fotosOS[index] = event.target.result;
+        // 2. SALVA O PREVIEW (Apenas para mostrar na tela agora)
+        const base64Data = event.target.result;
+        fotosOS[index] = base64Data;
 
-        // Update UI
+        // Atualiza a Interface (UI)
         const slots = document.querySelectorAll(".photo-slot");
         const slot = slots[index];
 
-        if (!slot.querySelector("img")) {
-          const img = document.createElement("img");
+        let img = slot.querySelector("img");
+        if (!img) {
+          img = document.createElement("img");
           slot.appendChild(img);
         }
-        slot.querySelector("img").src = event.target.result;
+
+        img.src = base64Data;
         slot.classList.add("has-photo");
+
+        // Esconde o ícone e o texto originais do slot
+        const icon = slot.querySelector("i");
+        const span = slot.querySelector("span");
+        if (icon) icon.style.display = "none";
+        if (span) span.style.display = "none";
       };
       reader.readAsDataURL(file);
     }
@@ -1354,6 +1740,7 @@ function finalizarOS(osId) {
         atualizarDashboard();
         renderizarOrdens();
         renderizarOSFinalizadas();
+        salvarOrdensLocal();
 
         Swal.fire({
           icon: "success",
@@ -1371,6 +1758,7 @@ function finalizarOS(osId) {
     atualizarDashboard();
     renderizarOrdens();
     renderizarOSFinalizadas();
+    salvarOrdensLocal();
   }
 }
 
@@ -1463,7 +1851,7 @@ function renderizarOSFinalizadas() {
 //======================
 function abrirModalEstoque() {
   const modal = document.getElementById("modal-estoque");
-  swal.fire({
+  Swal.fire({
     title: "Em breve!",
     text: "O módulo de estoque está em desenvolvimento e será lançado em breve. Fique ligado para novidades!",
     icon: "info",
@@ -1517,159 +1905,54 @@ function atualizarDadosFinanceiros() {
   const mesAtual = agora.getMonth();
   const anoAtual = agora.getFullYear();
 
-  // 1. Filtrar apenas as OS do mês atual (baseado na data de previsão ou entrada)
-  // Se o seu objeto OS tiver 'dataEntrada', use-o para o financeiro
+  // Filtra apenas OS concluídas no mês atual
   const osDoMes = ordensServico.filter((os) => {
-    const dataOS = new Date(os.previsao);
-    return dataOS.getMonth() === mesAtual && dataOS.getFullYear() === anoAtual;
+    const dataOS =
+      converterParaData(os.updatedAt) ||
+      converterParaData(os.createdAt) ||
+      converterParaData(os.previsao);
+    if (!dataOS) return false;
+
+    const statusConcluido = os.status === "pronto" || os.status === "entregue";
+    return (
+      statusConcluido &&
+      dataOS.getMonth() === mesAtual &&
+      dataOS.getFullYear() === anoAtual
+    );
   });
 
-  // 2. Separar faturamento por status (Ex: Concluído = Dinheiro em caixa)
-  const faturamentoTotal = osDoMes
-    .filter((os) => os.status === "pronto" || os.status === "Entregue") // Ajuste conforme seus nomes de status
-    .reduce((acc, os) => acc + Number(os.orcamento || 0), 0);
+  // --- AJUSTE AQUI ---
+  const faturamentoTotal = osDoMes.reduce((acc, os) => {
+    // 1. Tenta pegar o valor de 'orcamento' ou 'valor' (caso você tenha mudado o nome)
+    let valor = os.orcamento || os.valor || 0;
 
-  const qtdConcluida = osDoMes.filter(
-    (os) => os.status === "pronto" || os.status === "Entregue",
-  ).length;
+    // 2. Garante que o valor seja um número (remove R$ e converte vírgula se necessário)
+    if (typeof valor === "string") {
+      valor = valor.replace("R$", "").replace(".", "").replace(",", ".").trim();
+    }
 
-  // 3. Calcular Ticket Médio (Total / Qtd de serviços pagos)
+    return acc + (parseFloat(valor) || 0);
+  }, 0);
+  // -------------------
+
+  const qtdConcluida = osDoMes.length; // Para teste, vamos contar todas as do mês primeiro
   const ticketMedio = qtdConcluida > 0 ? faturamentoTotal / qtdConcluida : 0;
 
-  // 4. Atualizar os elementos do HTML que criamos
-  const elFaturamento = document.getElementById("fin-faturamento");
-  const elQtd = document.getElementById("fin-qtd-concluida");
-  const elTicket = document.getElementById("fin-ticket-medio");
-
-  if (elFaturamento) {
-    elFaturamento.innerText = faturamentoTotal.toLocaleString("pt-BR", {
+  // Atualização da Tela
+  document.getElementById("fin-faturamento").innerText =
+    faturamentoTotal.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
     });
-  }
+  document.getElementById("fin-qtd-concluida").innerText = qtdConcluida;
+  document.getElementById("fin-ticket-medio").innerText =
+    ticketMedio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  if (elQtd) elQtd.innerText = qtdConcluida;
-
-  if (elTicket) {
-    elTicket.innerText = ticketMedio.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  }
+  // Debug: Veja no F12 se os dados estão aparecendo aqui
+  console.log("OS encontradas no mês:", osDoMes);
+  console.log("Total calculado:", faturamentoTotal);
 }
 
 //==================
 // Relatorios
 //==================
-
-function gerarRelatorioMensal() {
-  const agora = new Date();
-  const mesAtual = agora.getMonth();
-  const anoAtual = agora.getFullYear();
-
-  // 1. Filtrar OS do mês atual
-  const osDoMes = ordensServico.filter((os) => {
-    const dataOS = new Date(os.previsao); // Ou use a data de entrada se tiver
-    return dataOS.getMonth() === mesAtual && dataOS.getFullYear() === anoAtual;
-  });
-
-  // 2. Cálculos de Indicadores
-  const totalFaturamento = osDoMes.reduce(
-    (acc, os) => acc + Number(os.orcamento || 0),
-    0,
-  );
-  const totalOS = osDoMes.length;
-  const ticketMedio = totalOS > 0 ? totalFaturamento / totalOS : 0;
-
-  // 3. Contagem por Marca (Para saber o que mais entra)
-  const marcas = {};
-  osDoMes.forEach((os) => {
-    const m = getMarcaText(os.marca);
-    marcas[m] = (marcas[m] || 0) + 1;
-  });
-
-  // 4. Montar o HTML do Relatório
-  const relatorioHTML = `
-    <html>
-      <head>
-        <title>Relatório Mensal - ${mesAtual + 1}/${anoAtual}</title>
-        <style>
-          body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; padding: 30px; }
-          h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-          .cards { display: flex; gap: 20px; margin-bottom: 30px; }
-          .card { flex: 1; padding: 20px; border: 1px solid #ddd; border-radius: 8px; text-align: center; background: #f9f9f9; }
-          .card h3 { margin: 0; font-size: 14px; color: #7f8c8d; text-transform: uppercase; }
-          .card p { margin: 10px 0 0; font-size: 24px; font-weight: bold; color: #2c3e50; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-          th { background-color: #3498db; color: white; }
-          tr:nth-child(even) { background-color: #f2f2f2; }
-          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #95a5a6; }
-          @media print { .no-print { display: none; } }
-        </style>
-      </head>
-      <body>
-        <h1>Relatório Mensal: Assistência Técnica</h1>
-        <p>Período: ${mesAtual + 1}/${anoAtual} | Gerado em: ${agora.toLocaleDateString()}</p>
-
-        <div class="cards">
-          <div class="card">
-            <h3>Total de OS</h3>
-            <p>${totalOS}</p>
-          </div>
-          <div class="card">
-            <h3>Faturamento Bruto</h3>
-            <p>R$ ${totalFaturamento.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          </div>
-          <div class="card">
-            <h3>Ticket Médio</h3>
-            <p>R$ ${ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          </div>
-        </div>
-
-        <h2>Desempenho por Marca</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Marca</th>
-              <th>Quantidade de Aparelhos</th>
-              <th>Representatividade (%)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${Object.entries(marcas)
-              .map(
-                ([marca, qtd]) => `
-              <tr>
-                <td>${marca}</td>
-                <td>${qtd}</td>
-                <td>${((qtd / totalOS) * 100).toFixed(1)}%</td>
-              </tr>
-            `,
-              )
-              .join("")}
-          </tbody>
-        </table>
-
-        <div class="no-print" style="margin-top: 30px;">
-          <button onclick="window.print()" style="padding: 10px 20px; cursor: pointer;">Imprimir Relatório</button>
-        </div>
-
-        <div class="footer">
-          Relatório gerado automaticamente pelo Sistema de Gestão de OS
-        </div>
-      </body>
-    </html>
-  `;
-
-  const win = window.open("", "_blank");
-  win.document.write(relatorioHTML);
-  win.document.close();
-}
-
-document
-  .getElementById("btn-relatorio-mensal")
-  .addEventListener("click", function (e) {
-    e.preventDefault();
-    gerarRelatorioMensal();
-  });
