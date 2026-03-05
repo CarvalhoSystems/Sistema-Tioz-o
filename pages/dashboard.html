@@ -49,7 +49,7 @@
         <i class="fas fa-file-alt"></i>
         <span>Relatórios</span>
       </a>
-      <a href="#" class="nav-item" data-page="configuracoes">
+      <a href="#" class="nav-item" data-page="configuracoes" onclick="abrirModalConfiguracao()">
         <i class="fas fa-cog"></i>
         <span>Configurações</span>
       </a>
@@ -971,15 +971,27 @@
     </div>
   </div>
 
+  <!-- Modal Configuração -->
+  <div class="modal-overlay" id="modal-configuracao">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-cog"></i>
+          Configuração
+        </h2>
+        <button class="modal-close" onclick="fecharModalConfiguracao()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="../js/dashboard.js?v=20260303-1726"></script>
+      <!-- Firebase -->
+      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+      <script src="../js/dashboard.js?v=20260303-1726"></script>
 </body>
 
 </html>

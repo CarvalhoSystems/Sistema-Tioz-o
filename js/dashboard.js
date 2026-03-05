@@ -282,6 +282,14 @@ function fecharModalFinanceiro() {
   const modal = document.getElementById("modal-financeiro");
   if (modal) modal.classList.remove("active");
 }
+function abrirModalConfiguracao() {
+  const modal = document.getElementById("modal-configuracao");
+  if (modal) modal.classList.add("active");
+}
+function fecharModalConfiguracao() {
+  const modal = document.getElementById("modal-configuracao");
+  if (modal) modal.classList.remove("active");
+}
 
 //======================
 // Previsão de Entrega (helpers)
@@ -2301,4 +2309,19 @@ function gerarRelatorioMensal(ano, mes) {
       currency: "BRL",
     }),
   };
+}
+
+//==============================================================================
+// Configuração
+//==============================================================================
+
+function abrirModalConfiguracao() {
+  const modal = document.getElementById("modal-configuracao");
+  Swal.fire({
+    title: "Configuração",
+    text: "Configuração do Sistema desabilitada pelo desenvolvedor caso seja necessario entrar em contato.",
+    timer: 3000,
+    icon: "info",
+    showCancelButton: false,
+  });
 }
